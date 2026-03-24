@@ -1,0 +1,96 @@
+@import 'tailwindcss';
+
+@theme {
+  --height-header: 60px;
+  --height-footer: 100px;
+
+  --animate-stars: stars 10s linear infinite;
+
+  @keyframes stars {
+    0% {
+      background-position: -100% 100%;
+    }
+    100% {
+      background-position: 0 0;
+    }
+  }
+
+
+  --color-sage: #b4c3a2;
+  --color-rose: #dfbbb1;
+  --color-blue: #a2b5c3;
+  --color-sand: #fdfcf0;
+  --color-sand-dark: #f3f1e0;
+  --color-dark: #4a4a4a;
+
+  --animate-gradient: gradient 15s ease infinite;
+
+  @keyframes gradient {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+}
+
+.animate-gradient {
+  /* Vintage Muted Palette: Warm Sand, Sage, Dusty Rose, Muted Blue */
+  background: linear-gradient(-45deg, #fdfcf0, #b4c3a2, #dfbbb1, #a2b5c3);
+  background-size: 400% 400%;
+  animation: gradient 15s ease infinite;
+}
+
+:root {
+  font-family: 'Roboto', sans-serif;
+}
+
+/* Modern scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* For Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) rgba(0, 0, 0, 0.05);
+}
+
+/* For dark mode (if your app supports it) */
+@media (prefers-color-scheme: dark) {
+  ::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+
+  * {
+    scrollbar-color: rgba(255, 255, 255, 0.2) rgba(255, 255, 255, 0.05);
+  }
+}

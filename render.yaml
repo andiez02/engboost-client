@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: engboost-frontend
+    env: node
+    buildCommand: yarn && yarn build
+    startCommand: yarn preview --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: NODE_VERSION
+        value: 18.0.0
+      - key: VITE_API_URL
+        value: https://engboost-backend.onrender.com/api
