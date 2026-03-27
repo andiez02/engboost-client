@@ -5,6 +5,11 @@ import tailwindcss from '@tailwindcss/vite';
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: './src/test-setup.js',
+  },
   server: {
     allowedHosts: ['engboost-frontend.onrender.com', 'localhost'],
   },

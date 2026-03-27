@@ -80,7 +80,7 @@ const folderSlice = createSlice({
     },
     updateFolder: (state, action) => {
       const index = state.folders.findIndex(
-        (f) => f._id === action.payload._id
+        (f) => (f.id || f._id) === (action.payload.id || action.payload._id)
       );
       if (index !== -1) {
         state.folders[index] = action.payload;
@@ -94,14 +94,16 @@ const folderSlice = createSlice({
     },
     updateFlashcardCount: (state, action) => {
       const { folderId, count } = action.payload;
-      const folder = state.folders.find((f) => f._id === folderId);
+      const folder = state.folders.find((f) => (f.id || f._id) === folderId);
       if (folder) {
         folder.flashcard_count = count;
       }
     },
     updateFolderWithFlashcardCount: (state, action) => {
       const updatedFolder = action.payload;
-      const index = state.folders.findIndex((f) => f._id === updatedFolder._id);
+      const index = state.folders.findIndex(
+        (f) => (f.id || f._id) === (updatedFolder.id || updatedFolder._id)
+      );
       if (index !== -1) {
         state.folders[index] = updatedFolder;
       }
@@ -151,8 +153,9 @@ const folderSlice = createSlice({
         state.error = null;
       })
       .addCase(deleteFolder.fulfilled, (state, action) => {
-        // state.isLoading = false;
-        state.folders = state.folders.filter((f) => f._id !== action.payload);
+        state.folders = state.folders.filter(
+          (f) => (f.id || f._id) !== action.payload
+        );
         if (state.selectedFolder === action.payload) {
           state.selectedFolder = null;
         }

@@ -1,28 +1,93 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
   Container,
   Grid,
   Snackbar,
   Alert,
   Box,
+  Button,
+  ButtonBase,
+  Typography,
 } from '@mui/material';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import {
   snaplangDetectAPI,
   saveFlashcardsToFolderAPI,
 } from '../../../../../apis';
 
 // Sub-components
-import SnaplangHeader from './components/SnaplangHeader';
 import UploadPanel from './components/UploadPanel';
 import ResultsTray from './components/ResultsTray';
 import SaveFlashcardModal from '../../../../../components/SaveFlashcardModal/SaveFlashcardModal';
 import { useModal } from '../../../../../modal/ModalSystem/useModal';
+import GenerateDeck from '../Discover/GenerateDeck';
+import PhotoCameraOutlinedIcon from '@mui/icons-material/PhotoCameraOutlined';
+import AutoAwesomeOutlinedIcon from '@mui/icons-material/AutoAwesomeOutlined';
+import FloatingNotification from '../../../../../components/Feedback/FloatingNotification';
+import useFloatingNotification from '../../../../../hooks/useFloatingNotification';
+import streakSvg from '../../../../../assets/svg/streak.svg';
+
+const CREATE_STREAK_DAYS_KEY = 'engboost_createflashcards_streak_days';
+const CREATE_STREAK_LAST_DATE_KEY = 'engboost_createflashcards_last_date';
+
+function StatBadge({ icon, children, tint }) {
+  return (
+    <Box
+      sx={{
+        height: 48,
+        px: 2,
+        borderRadius: 3,
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 1.5,
+        bgcolor: '#fff',
+        border: `2px solid ${tint}`,
+        borderBottom: `4px solid ${tint}`,
+        color: tint,
+      }}
+    >
+      {icon}
+      <Typography sx={{ fontWeight: 900, fontSize: '0.95rem', letterSpacing: '-0.01em' }}>
+        {children}
+      </Typography>
+    </Box>
+  );
+}
+
+function toLocalISODate(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function parseLocalISODate(s) {
+  const [y, m, d] = s.split('-').map((v) => Number(v));
+  return new Date(y, m - 1, d);
+}
 
 function Snaplang() {
   const { openModal } = useModal();
   const location = useLocation();
+  const navigate = useNavigate();
   const { folderId, folderTitle } = location.state || {};
+  const searchParams = new URLSearchParams(location.search);
+  const initialMode = searchParams.get('mode') === 'ai' ? 'ai' : 'upload';
+  const [mode, setMode] = useState(initialMode);
+
+  const reviewedToday = useSelector((state) => state.study.stats?.reviewedToday ?? 0);
+  const { notification, showNotification, hideNotification } = useFloatingNotification();
+
+  const [streakDays, setStreakDays] = useState(() => {
+    if (typeof window === 'undefined') return 1;
+    const raw = Number(localStorage.getItem(CREATE_STREAK_DAYS_KEY));
+    return Number.isFinite(raw) && raw > 0 ? raw : 1;
+  });
+
+  const [rewardData, setRewardData] = useState(null);
+  const autoStudyAfterSaveRef = useRef(false);
+
   const [image, setImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -30,6 +95,7 @@ function Snaplang() {
   const [saving, setSaving] = useState(false);
   const [flashcards, setFlashcards] = useState([]);
   const [dragActive, setDragActive] = useState(false);
+  const [savedFolderId, setSavedFolderId] = useState(null);
   const [alert, setAlert] = useState({
     open: false,
     message: '',
@@ -38,6 +104,32 @@ function Snaplang() {
 
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
+
+  const bumpCreateStreak = useCallback(() => {
+    if (typeof window === 'undefined') return;
+
+    const todayStr = toLocalISODate(new Date());
+    const lastStr = localStorage.getItem(CREATE_STREAK_LAST_DATE_KEY);
+    const prevDaysRaw = Number(localStorage.getItem(CREATE_STREAK_DAYS_KEY));
+    const prevDays = Number.isFinite(prevDaysRaw) && prevDaysRaw > 0 ? prevDaysRaw : 1;
+
+    // First time
+    if (!lastStr) {
+      localStorage.setItem(CREATE_STREAK_LAST_DATE_KEY, todayStr);
+      localStorage.setItem(CREATE_STREAK_DAYS_KEY, String(prevDays));
+      setStreakDays(prevDays);
+      return;
+    }
+
+    const today = parseLocalISODate(todayStr);
+    const last = parseLocalISODate(lastStr);
+    const diffDays = Math.round((today.getTime() - last.getTime()) / 86_400_000);
+
+    const nextDays = diffDays === 0 ? prevDays : diffDays === 1 ? prevDays + 1 : 1;
+    localStorage.setItem(CREATE_STREAK_LAST_DATE_KEY, todayStr);
+    localStorage.setItem(CREATE_STREAK_DAYS_KEY, String(nextDays));
+    setStreakDays(nextDays);
+  }, []);
 
   const handleFile = useCallback((file) => {
     if (!file) return;
@@ -116,11 +208,11 @@ function Snaplang() {
 
       setFlashcards((prev) => [...newFlashcards, ...prev]);
 
-      setAlert({
-        open: true,
-        message: `Đã tạo ${newFlashcards.length} flashcard(s) thành công`,
-        severity: 'success',
-      });
+      const createdCount = newFlashcards.length ?? 0;
+      if (createdCount > 0) {
+        setRewardData({ count: createdCount, xp: 5 });
+        bumpCreateStreak();
+      }
     } catch (error) {
       console.error(error);
       setAlert({
@@ -133,7 +225,7 @@ function Snaplang() {
       setImage(null);
       setPreviewUrl(null);
     }
-  }, [image, previewUrl]);
+  }, [image, previewUrl, bumpCreateStreak]);
 
   const handleRemoveImage = useCallback(() => {
     setImage(null);
@@ -221,6 +313,18 @@ function Snaplang() {
           await folderData.onFolderUpdate(response.data.folder);
         }
 
+        const savedId = response.data.folder?.id || folderData.id;
+        setSavedFolderId(savedId || null);
+        const shouldAutoStudy = autoStudyAfterSaveRef.current;
+        autoStudyAfterSaveRef.current = false;
+
+        if (shouldAutoStudy && savedId) {
+          // Navigate shortly after saving to keep the flow feeling responsive.
+          setTimeout(() => {
+            navigate(`/study?folderId=${savedId}`);
+          }, 450);
+        }
+
         setTimeout(() => {
           setFlashcards([]);
 
@@ -248,9 +352,9 @@ function Snaplang() {
       setSaving(false);
       return false;
     }
-  }, [flashcards]);
+  }, [flashcards, navigate]);
 
-  const saveAllFlashcards = useCallback(() => {
+  const saveAllFlashcards = useCallback((opts = {}) => {
     if (flashcards.length === 0) {
       setAlert({
         open: true,
@@ -259,6 +363,8 @@ function Snaplang() {
       });
       return;
     }
+
+    autoStudyAfterSaveRef.current = !!opts.autoStudy;
     
     openModal(SaveFlashcardModal, {
       flashcards,
@@ -281,78 +387,219 @@ function Snaplang() {
     });
   }, []);
 
+  useEffect(() => {
+    if (!rewardData?.count) return;
+
+    showNotification({
+      title: `🎉 Bạn đã tạo ${rewardData.count} từ mới!`,
+      message: 'Tuyệt vời! Bắt đầu học ngay để thẻ vào đúng nhịp.',
+      badgeText: '🆕 Từ mới',
+      metaText: rewardData.xp > 0 ? `✨ +${rewardData.xp} XP` : null,
+      durationMs: 8000,
+    });
+  }, [rewardData, showNotification]);
+
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Grid container spacing={4}>
-        {/* Left Column: Input Panel */}
-        <Grid item xs={12} md={5}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <SnaplangHeader />
-            <UploadPanel
-              previewUrl={previewUrl}
-              uploading={uploading}
-              loading={loading}
-              dragActive={dragActive}
-              onUpload={handleUpload}
-              onFileSelect={triggerFileInput}
-              onCameraSelect={triggerCameraInput}
-              onRemoveImage={handleRemoveImage}
-              onDrag={handleDrag}
-              onDrop={handleDrop}
-            />
+      <FloatingNotification
+        notification={notification}
+        onClose={hideNotification}
+      />
+
+      {/* Header + 2 options */}
+      <Box sx={{ mb: 4, display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap' }}>
+          <Box>
+            {/* <Typography variant="h4" sx={{ fontWeight: 950, color: '#0F172A', lineHeight: 1.1 }}>
+              Create Flashcards
+            </Typography> */}
+            <Typography sx={{ mt: 0.8, color: 'text.secondary', maxWidth: 520 }}>
+              Tạo flashcards từ ảnh hoặc từ chủ đề bằng AI. Hãy làm 1 bước nhỏ để tiến bộ mỗi ngày.
+            </Typography>
           </Box>
-        </Grid>
 
-        {/* Right Column: Results Tray */}
-        <Grid item xs={12} md={7}>
-          <ResultsTray
-            flashcards={flashcards}
-            saving={saving}
-            onClear={handleClearFlashcards}
-            onSaveAll={saveAllFlashcards}
-            onRemoveCard={handleRemoveFlashcard}
-          />
-        </Grid>
-      </Grid>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, flexWrap: 'wrap', justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
+            <StatBadge
+              tint="#4F46E5"
+              icon={
+                <img
+                  src={streakSvg}
+                  alt="Streak"
+                  style={{ width: 18, height: 18, display: 'block' }}
+                />
+              }
+            >
+              {streakDays} ngày
+            </StatBadge>
 
-      {/* Hidden Inputs */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        style={{ display: 'none' }}
-        onChange={handleImageChange}
-      />
-      <input
-        ref={cameraInputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        style={{ display: 'none' }}
-        onChange={handleImageChange}
-      />
+            <StatBadge
+              tint="#059669"
+              icon={<Box component="span" sx={{ fontSize: 16, lineHeight: 1 }}>📈</Box>}
+            >
+              {reviewedToday} từ hôm nay
+            </StatBadge>
 
-      <Snackbar
-        open={alert.open}
-        autoHideDuration={3000}
-        onClose={handleCloseAlert}
-        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-        sx={{ top: '80px !important' }}
-      >
-        <Alert
-          onClose={handleCloseAlert}
-          severity={alert.severity}
-          variant="filled"
+            {notification && rewardData?.xp ? (
+              <StatBadge
+                tint="#C2410C"
+                icon={<Box component="span" sx={{ fontSize: 16, lineHeight: 1 }}>✨</Box>}
+              >
+                +{rewardData.xp} XP
+              </StatBadge>
+            ) : null}
+          </Box>
+        </Box>
+
+        <Box
           sx={{
-            width: '100%',
-            borderRadius: '12px',
-            boxShadow: '0 8px 16px rgba(0,0,0,0.12)',
-            fontWeight: 500,
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 2,
+            mb: 2,
           }}
         >
-          {alert.message}
-        </Alert>
-      </Snackbar>
+          <ButtonBase
+            onClick={() => setMode('upload')}
+            sx={{
+              borderRadius: 3,
+              px: 3,
+              py: 1.5,
+              border: '2px solid',
+              borderColor: mode === 'upload' ? '#1CB0F6' : '#E5E5E5',
+              borderBottom: '4px solid',
+              borderBottomColor: mode === 'upload' ? '#1899D6' : '#E5E5E5',
+              bgcolor: mode === 'upload' ? '#DDF4FF' : '#fff',
+              color: mode === 'upload' ? '#1CB0F6' : '#AFAFAF',
+              transition: 'all 0.1s ease',
+              borderBottomWidth: mode === 'upload' ? '2px' : '4px',
+              transform: mode === 'upload' ? 'translateY(2px)' : 'none',
+              marginBottom: mode === 'upload' ? '2px' : '0',
+              '&:hover': mode !== 'upload' ? { bgcolor: '#F7F7F7' } : {},
+            }}
+          >
+            <PhotoCameraOutlinedIcon sx={{ fontSize: 24, mr: 1 }} />
+            <Typography sx={{ fontWeight: 900, fontSize: '1rem' }}>
+              TẠO TỪ ẢNH
+            </Typography>
+          </ButtonBase>
+
+          <ButtonBase
+            onClick={() => setMode('ai')}
+            sx={{
+              borderRadius: 3,
+              px: 3,
+              py: 1.5,
+              border: '2px solid',
+              borderColor: mode === 'ai' ? '#CE82FF' : '#E5E5E5',
+              borderBottom: '4px solid',
+              borderBottomColor: mode === 'ai' ? '#A568CC' : '#E5E5E5',
+              bgcolor: mode === 'ai' ? '#F6E5FF' : '#fff',
+              color: mode === 'ai' ? '#CE82FF' : '#AFAFAF',
+              transition: 'all 0.1s ease',
+              borderBottomWidth: mode === 'ai' ? '2px' : '4px',
+              transform: mode === 'ai' ? 'translateY(2px)' : 'none',
+              marginBottom: mode === 'ai' ? '2px' : '0',
+              '&:hover': mode !== 'ai' ? { bgcolor: '#F7F7F7' } : {},
+            }}
+          >
+            <AutoAwesomeOutlinedIcon sx={{ fontSize: 24, mr: 1 }} />
+            <Typography sx={{ fontWeight: 900, fontSize: '1rem' }}>
+              TẠO BẰNG AI
+            </Typography>
+          </ButtonBase>
+        </Box>
+      </Box>
+
+      {/* Mode Content */}
+      {mode === 'upload' ? (
+        <Grid container spacing={4}>
+          {/* Left Column: Input Panel */}
+          <Grid item xs={12} md={5}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <UploadPanel
+                previewUrl={previewUrl}
+                uploading={uploading}
+                loading={loading}
+                dragActive={dragActive}
+                onUpload={handleUpload}
+                onFileSelect={triggerFileInput}
+                onCameraSelect={triggerCameraInput}
+                onRemoveImage={handleRemoveImage}
+                onDrag={handleDrag}
+                onDrop={handleDrop}
+              />
+            </Box>
+          </Grid>
+
+          {/* Right Column: Results Tray */}
+          <Grid item xs={12} md={7}>
+            <ResultsTray
+              flashcards={flashcards}
+              saving={saving}
+              onClear={handleClearFlashcards}
+              onSaveAll={saveAllFlashcards}
+              onRemoveCard={handleRemoveFlashcard}
+            />
+          </Grid>
+        </Grid>
+      ) : (
+        <GenerateDeck variant="create" />
+      )}
+
+      {mode === 'upload' ? (
+        <>
+          {/* Hidden Inputs */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            style={{ display: 'none' }}
+            onChange={handleImageChange}
+          />
+          <input
+            ref={cameraInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            style={{ display: 'none' }}
+            onChange={handleImageChange}
+          />
+
+          <Snackbar
+            open={alert.open}
+            autoHideDuration={5000}
+            onClose={handleCloseAlert}
+            anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+            sx={{ top: '120px !important' }}
+          >
+            <Alert
+              onClose={handleCloseAlert}
+              severity={alert.severity}
+              variant="filled"
+              action={
+                alert.severity === 'success' && savedFolderId ? (
+                  <Button
+                    color="inherit"
+                    size="small"
+                    sx={{ fontWeight: 700, whiteSpace: 'nowrap' }}
+                    onClick={() => navigate(`/study?folderId=${savedFolderId}`)}
+                  >
+                    Học ngay
+                  </Button>
+                ) : undefined
+              }
+              sx={{
+                width: '100%',
+                borderRadius: '12px',
+                boxShadow: '0 8px 16px rgba(0,0,0,0.12)',
+                fontWeight: 500,
+              }}
+            >
+              {alert.message}
+            </Alert>
+          </Snackbar>
+        </>
+      ) : null}
     </Container>
   );
 }

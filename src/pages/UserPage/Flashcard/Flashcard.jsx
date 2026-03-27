@@ -9,7 +9,7 @@ function Flashcard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   return (
-    <div className="flex min-h-screen bg-[#f4f6f9]">
+    <div className="flex min-h-screen bg-[#FAFAFA]">
       <Sidebar isOpen={isSidebarOpen} />
 
       <div
@@ -22,19 +22,19 @@ function Flashcard() {
           setIsSidebarOpen={setIsSidebarOpen}
         />
 
-        <div className="mt-[60px] px-8 py-8">
+        <div className="mt-[60px] px-6 py-8 md:px-8">
           <FlashcardTab
             headerSlot={
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm border border-slate-100">
-                  <Lottie animationData={card} loop className="w-6 h-6" />
+              <div className="flex items-center gap-4">
+                <div className="w-[60px] h-[60px] rounded-2xl bg-[#DDF4FF] border-2 border-[#1CB0F6] border-b-[4px] flex items-center justify-center shrink-0">
+                  <Lottie animationData={card} loop className="w-8 h-8" />
                 </div>
                 <div>
-                  <h1 className="text-[22px] font-black text-slate-900 tracking-tight leading-none uppercase">
-                    Flashcard
+                  <h1 className="text-2xl font-black text-[#4B4B4B] tracking-tight leading-none uppercase">
+                    Thẻ Từ Vựng
                   </h1>
-                  <p className="text-[12px] text-slate-400 font-medium mt-0.5">
-                    Quản lý và học từ vựng của bạn
+                  <p className="text-[13px] text-[#AFAFAF] font-bold mt-1.5 uppercase tracking-wider">
+                    Khám Phá & Quản Lý Thẻ
                   </p>
                 </div>
               </div>

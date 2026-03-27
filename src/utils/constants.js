@@ -10,6 +10,8 @@ export const routes = {
   //Chatbot
   CHATBOT_INTRO: '/chatbot_intro',
   CHATBOT: '/chatbot',
+  //Study
+  STUDY: '/study',
   //About Us
   ABOUT_US: '/about_us',
 

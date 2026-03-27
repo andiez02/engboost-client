@@ -10,6 +10,45 @@ export const colors = {
   white: '#ffffff',
 };
 
+export const gamify = {
+  blue: '#1CB0F6',
+  blueDark: '#1899D6',
+  blueBg: '#DDF4FF',
+  green: '#58CC02',
+  greenDark: '#46A302',
+  greenBg: '#D7FFB8',
+  red: '#FF4B4B',
+  redDark: '#EA2B2B',
+  redBg: '#FFF0F0',
+  gray: '#E5E5E5',
+  grayDark: '#D5D5D5',
+  surface: '#F7F7F7',
+  text: '#4B4B4B',
+  sub: '#AFAFAF',
+  white: '#ffffff',
+};
+
+// Helper for 3D "pushable" buttons
+export const btn3d = (bg, border) => ({
+  borderRadius: 3,
+  textTransform: 'uppercase',
+  fontWeight: 900,
+  fontSize: '0.8rem',
+  boxShadow: 'none',
+  bgcolor: bg,
+  color: '#fff',
+  border: `2px solid ${bg}`,
+  borderBottom: `4px solid ${border}`,
+  '&:hover': { bgcolor: bg },
+  '&:active': { borderBottomWidth: 0, transform: 'translateY(4px)' },
+  '&:disabled': {
+    bgcolor: gamify.gray,
+    borderColor: gamify.gray,
+    borderBottomColor: gamify.grayDark,
+    color: gamify.sub,
+  },
+});
+
 export const glassmorphism = {
   light: {
     backgroundColor: alpha(colors.white, 0.4),
@@ -39,6 +78,7 @@ export const transitions = {
 
 export const theme = {
   colors,
+  gamify,
   glassmorphism,
   transitions,
 };

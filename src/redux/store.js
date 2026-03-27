@@ -4,6 +4,7 @@ import { combineReducers } from "@reduxjs/toolkit";
 import { persistReducer } from "redux-persist";
 import storage from "redux-persist/lib/storage";
 import folderReducer from "./folder/folderSlice";
+import studyReducer from "./study/studySlice";
 
 // Cấu hình persist
 const rootPersistConfig = {
@@ -15,6 +16,7 @@ const rootPersistConfig = {
 const reducers = combineReducers({
   user: userReducer,
   folders: folderReducer,
+  study: studyReducer,
 });
 
 //Thực hiện persist Reducer

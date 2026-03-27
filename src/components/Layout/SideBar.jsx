@@ -1,19 +1,15 @@
 import {
   LayoutDashboard,
   BookOpen,
-  GraduationCap,
   Home,
-  BotMessageSquare,
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { colors, glassmorphism, transitions } from '../../theme';
+import { gamify } from '../../theme';
 import { Typography } from '@mui/material';
 
 const dashboardItems = [
   { name: 'Overview', icon: LayoutDashboard, path: '/dashboard' },
   { name: 'Flashcard', icon: BookOpen, path: '/flashcard' },
-  { name: 'My Course', icon: GraduationCap, path: '/my_course' },
-  { name: 'AI', icon: BotMessageSquare, path: '/chatbot' },
 ];
 
 export default function Sidebar({ isOpen }) {
@@ -26,9 +22,8 @@ export default function Sidebar({ isOpen }) {
         isOpen ? 'w-58' : 'w-20'
       } flex flex-col py-6 overflow-hidden z-40`}
       style={{
-        backgroundColor: 'rgba(255, 255, 255, 0.6)',
-        backdropFilter: 'blur(20px)',
-        borderRight: '1px solid rgba(255, 255, 255, 0.8)',
+        backgroundColor: '#fff',
+        borderRight: `2px solid ${gamify.gray}`,
         boxShadow: '4px 0 25px rgba(0,0,0,0.02)',
       }}
     >
@@ -39,21 +34,17 @@ export default function Sidebar({ isOpen }) {
           return (
             <li key={index} className='group'>
               <div
-                className={`flex items-center rounded-2xl cursor-pointer relative py-3.5 transition-all duration-500 ${
+                className={`flex items-center rounded-2xl cursor-pointer relative py-3 transition-all duration-200 ${
                   isOpen ? 'px-4' : 'px-2 justify-center'
                 }`}
                 style={{
-                  backgroundColor: isActive ? `${colors.sage}25` : 'transparent',
+                  backgroundColor: isActive ? gamify.blueBg : 'transparent',
+                  border: isActive ? `2px solid ${gamify.blue}` : '2px solid transparent',
+                  borderBottom: isActive ? `4px solid ${gamify.blue}` : '2px solid transparent',
                 }}
                 onClick={() => navigate(item.path)}
               >
-                {/* Active Indicator */}
-                {isActive && (
-                  <div
-                    className='absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-full'
-                    style={{ backgroundColor: colors.sage }}
-                  ></div>
-                )}
+
 
                 {/* Icon container */}
                 <div
@@ -61,11 +52,11 @@ export default function Sidebar({ isOpen }) {
                     isOpen ? 'mr-4' : 'mr-0'
                   }`}
                   style={{
-                    color: isActive ? colors.sage : colors.dark,
-                    opacity: isActive ? 1 : 0.6,
+                    color: isActive ? gamify.blue : gamify.sub,
+                    opacity: 1,
                   }}
                 >
-                  <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
+                  <Icon size={24} strokeWidth={isActive ? 3 : 2.5} />
                 </div>
 
                 {/* Text container */}
@@ -76,21 +67,21 @@ export default function Sidebar({ isOpen }) {
                 >
                   <Typography
                     sx={{
-                      fontWeight: isActive ? 800 : 600,
-                      fontSize: '0.95rem',
-                      color: colors.dark,
-                      opacity: isActive ? 1 : 0.8,
+                      fontWeight: 900,
+                      fontSize: '0.9rem',
+                      letterSpacing: '0.05em',
+                      color: isActive ? gamify.blue : gamify.sub,
                       whiteSpace: 'nowrap',
-                      transition: 'all 0.3s',
+                      transition: 'all 0.2s',
                     }}
                   >
-                    {item.name}
+                    {item.name.toUpperCase()}
                   </Typography>
                 </div>
 
                 {/* Hover effect background */}
                 {!isActive && (
-                  <div className='absolute inset-0 rounded-2xl bg-dark/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10'></div>
+                  <div className='absolute inset-0 rounded-2xl bg-gray-100 opacity-0 group-hover:opacity-100 transition-opacity duration-200 -z-10'></div>
                 )}
               </div>
             </li>
@@ -100,22 +91,24 @@ export default function Sidebar({ isOpen }) {
 
       <div className='mt-auto px-3'>
         <div
-          className={`group flex items-center rounded-2xl cursor-pointer relative py-3.5 transition-all duration-500 ${
+          className={`group flex items-center rounded-2xl cursor-pointer relative py-3 transition-all duration-200 ${
             isOpen ? 'px-4' : 'px-2 justify-center'
           }`}
           style={{
-            backgroundColor: `${colors.dark}08`,
+            border: '2px solid transparent',
           }}
           onClick={() => navigate('/')}
         >
+          {/* Hover effect background */}
+          <div className='absolute inset-0 rounded-2xl bg-gray-100 opacity-0 group-hover:opacity-100 transition-opacity duration-200 -z-10'></div>
           {/* Icon container */}
           <div
             className={`flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-110 ${
               isOpen ? 'mr-4' : 'mr-0'
             }`}
-            style={{ color: colors.dark, opacity: 0.6 }}
+            style={{ color: gamify.text }}
           >
-            <Home size={22} />
+            <Home size={24} strokeWidth={2.5} />
           </div>
 
           {/* Text container */}
@@ -126,14 +119,14 @@ export default function Sidebar({ isOpen }) {
           >
             <Typography
               sx={{
-                fontWeight: 700,
-                fontSize: '0.9rem',
-                color: colors.dark,
-                opacity: 0.8,
+                fontWeight: 900,
+                fontSize: '0.85rem',
+                letterSpacing: '0.05em',
+                color: gamify.text,
                 whiteSpace: 'nowrap',
               }}
             >
-              Về trang chủ
+              VỀ TRANG CHỦ
             </Typography>
           </div>
         </div>

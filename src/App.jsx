@@ -23,6 +23,7 @@ import UserVideoPlayer from './pages/UserPage/MyCourse/UserVideoPlayer.jsx';
 import ChatbotIntro from './pages/GeneralPage/ChatbotIntro.jsx';
 import Chatbot from './pages/UserPage/Chatbot/Chatbot.jsx';
 import AdminLayout from './components/Layout/AdminLayout.jsx';
+import StudyPage from './pages/UserPage/Study/StudyPage.jsx';
 
 const ProtectedRoute = ({ user, allowedRoles }) => {
   if (!user) return <Navigate to="/login" replace={true} />;
@@ -78,6 +79,7 @@ function App() {
         <Route path={routes.FLASHCARD_FOLDERS} element={<Flashcard />} />
         <Route path={routes.FLASHCARD_SNAPLANG} element={<Flashcard />} />
         <Route path={routes.CHATBOT} element={<Chatbot />} />
+        <Route path={routes.STUDY} element={<StudyPage />} />
         <Route
           path="/my_course/:courseId/video"
           element={<UserVideoPlayer />}

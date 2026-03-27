@@ -1,125 +1,168 @@
 import React from 'react';
-import { Card, Typography, IconButton, Box, Fade, alpha } from '@mui/material';
+import { Typography, IconButton, Box, Fade, alpha } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import VolumeUpOutlinedIcon from '@mui/icons-material/VolumeUpOutlined';
 
-const Cards = React.memo(({ card, onRemove, isPublic = false }) => (
-  <Fade in={true} timeout={300}>
-    <Card
-      elevation={0}
-      sx={{
-        mb: 2,
-        borderRadius: 2,
-        overflow: 'hidden',
-        border: '1px solid',
-        borderColor: alpha('#000', 0.06),
-        transition: 'all 0.2s ease',
-        '&:hover': {
-          borderColor: alpha('#3b82f6', 0.2),
-          boxShadow: `0 4px 12px ${alpha('#000', 0.05)}`,
-        },
-      }}
-    >
-      <Box sx={{ display: 'flex', p: 2, position: 'relative' }}>
-        {/* Image container */}
+const Cards = React.memo(({ card, onRemove, isPublic = false }) => {
+  const handleSpeak = (e) => {
+    e.stopPropagation();
+    if (!card.english) return;
+    const utt = new SpeechSynthesisUtterance(card.english);
+    utt.lang = 'en-US';
+    window.speechSynthesis.speak(utt);
+  };
+
+  return (
+    <Fade in timeout={280}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 2,
+          px: 2,
+          py: 1.6,
+          borderRadius: '14px',
+          border: '1px solid rgba(0,0,0,0.07)',
+          bgcolor: '#fff',
+          transition: 'box-shadow 0.18s, border-color 0.18s',
+          '&:hover': {
+            borderColor: 'rgba(79,70,229,0.22)',
+            boxShadow: '0 4px 18px rgba(79,70,229,0.07)',
+          },
+        }}
+      >
+        {/* ── Image ── */}
         <Box
           sx={{
-            width: '70px',
-            height: '70px',
-            borderRadius: 1.5,
+            width: 58,
+            height: 58,
+            borderRadius: '10px',
+            bgcolor: 'rgba(79,70,229,0.05)',
+            flexShrink: 0,
             overflow: 'hidden',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            bgcolor: alpha('#f8fafc', 0.9),
           }}
         >
           <img
             src={card.imageUrl}
             alt={card.object}
-            style={{
-              width: '90%',
-              height: '90%',
-              objectFit: 'contain',
-            }}
+            style={{ width: '86%', height: '86%', objectFit: 'contain' }}
           />
         </Box>
 
-        {/* Content */}
+        {/* ── Category tag ── */}
         <Box
           sx={{
-            flex: 1,
-            ml: 2.5,
-            display: 'flex',
-            flexDirection: 'column',
+            width: 72,
+            flexShrink: 0,
+            display: { xs: 'none', sm: 'flex' },
+            alignItems: 'center',
             justifyContent: 'center',
           }}
         >
-          {/* Category label */}
-          <Typography
-            variant="caption"
+          <Box
             sx={{
-              color: '#3b82f6',
-              fontWeight: 600,
-              textTransform: 'uppercase',
-              letterSpacing: '0.03em',
-              fontSize: '0.65rem',
-              mb: 0.75,
+              px: 1,
+              py: 0.3,
+              borderRadius: '6px',
+              bgcolor: 'rgba(79,70,229,0.08)',
             }}
           >
-            {card.object}
-          </Typography>
+            <Typography
+              sx={{
+                fontSize: '0.68rem',
+                fontWeight: 700,
+                color: '#4F46E5',
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                maxWidth: 64,
+              }}
+            >
+              {card.object}
+            </Typography>
+          </Box>
+        </Box>
 
-          {/* English word */}
+        {/* ── Divider ── */}
+        <Box sx={{ width: '1px', height: 36, bgcolor: 'rgba(0,0,0,0.07)', flexShrink: 0, display: { xs: 'none', sm: 'block' } }} />
+
+        {/* ── English ── */}
+        <Box sx={{ flex: '0 0 140px', minWidth: 0 }}>
           <Typography
-            variant="subtitle1"
             sx={{
-              fontWeight: 600,
-              color: '#0f172a',
-              mb: 0.5,
-              fontSize: '0.95rem',
+              fontWeight: 700,
+              fontSize: '0.92rem',
+              color: '#0F172A',
               letterSpacing: '-0.01em',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
             }}
           >
             {card.english}
           </Typography>
+        </Box>
 
-          {/* Vietnamese translation */}
+        {/* ── Divider ── */}
+        <Box sx={{ width: '1px', height: 36, bgcolor: 'rgba(0,0,0,0.07)', flexShrink: 0 }} />
+
+        {/* ── Vietnamese ── */}
+        <Box sx={{ flex: 1, minWidth: 0 }}>
           <Typography
-            variant="body2"
             sx={{
-              fontSize: '0.85rem',
-              color: '#64748b',
+              fontSize: '0.86rem',
+              color: '#64748B',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
             }}
           >
             {card.vietnamese}
           </Typography>
         </Box>
 
-        {/* Remove button */}
-        {!isPublic && (
+        {/* ── Actions ── */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
           <IconButton
             size="small"
-            aria-label="remove"
-            className="interceptor-loading"
+            onClick={handleSpeak}
             sx={{
-              position: 'absolute',
-              top: 8,
-              right: 8,
-              color: alpha('#64748b', 0.5),
-              p: 0.5,
-              '&:hover': {
-                bgcolor: alpha('#f87171', 0.08),
-                color: '#ef4444',
-              },
+              width: 30,
+              height: 30,
+              borderRadius: '8px',
+              color: alpha('#4F46E5', 0.5),
+              '&:hover': { bgcolor: 'rgba(79,70,229,0.08)', color: '#4F46E5' },
             }}
-            onClick={() => onRemove(card.id)}
           >
-            <CloseIcon sx={{ fontSize: 16 }} />
+            <VolumeUpOutlinedIcon sx={{ fontSize: 16 }} />
           </IconButton>
-        )}
+
+          {!isPublic && (
+            <IconButton
+              size="small"
+              aria-label="remove"
+              className="interceptor-loading"
+              onClick={() => onRemove(card.id)}
+              sx={{
+                width: 30,
+                height: 30,
+                borderRadius: '8px',
+                color: alpha('#64748B', 0.4),
+                '&:hover': { bgcolor: 'rgba(239,68,68,0.07)', color: '#EF4444' },
+              }}
+            >
+              <CloseIcon sx={{ fontSize: 16 }} />
+            </IconButton>
+          )}
+        </Box>
       </Box>
-    </Card>
-  </Fade>
-));
+    </Fade>
+  );
+});
 
 export default Cards;

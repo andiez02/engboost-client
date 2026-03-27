@@ -2,22 +2,17 @@ import { Button } from '@mui/material';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import FolderIcon from '@mui/icons-material/Folder';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
+import SchoolIcon from '@mui/icons-material/School';
 import { routes } from '../../utils/constants';
 import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchFolders } from '../../redux/folder/folderSlice';
+import { useSelector } from 'react-redux';
+import {  } from '../../redux/folder/folderSlice';
 import { colors } from '../../theme';
-import { Typography } from '@mui/material';
+import { Typography, Box, Chip } from '@mui/material';
 
 function UserFlashcardOverview() {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
   const { folders } = useSelector((state) => state.folders);
-
-  useEffect(() => {
-    dispatch(fetchFolders());
-  }, [dispatch]);
 
   const totalFlashcards = folders?.reduce(
     (acc, folder) => acc + (folder.flashcard_count || 0),
@@ -36,9 +31,11 @@ function UserFlashcardOverview() {
 
   return (
     <div>
-      <Typography variant='h6' sx={{ fontWeight: 700, color: colors.dark, mb: 3 }}>
-        Flashcard của tôi
-      </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+        <Typography variant='h6' sx={{ fontWeight: 700, color: colors.dark }}>
+          Flashcard của tôi
+        </Typography>
+      </Box>
       <div
         className='w-full h-auto min-h-[160px] mt-4 rounded-[2rem] p-8 flex flex-col justify-between transition-all duration-500'
         style={{

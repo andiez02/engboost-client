@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useDispatch } from 'react-redux';
 import { toast } from 'react-toastify';
 import {
@@ -10,9 +10,7 @@ import {
   Divider,
   TextField,
   Typography,
-  Paper,
   Box,
-  Chip,
   Avatar,
   Stack,
   CircularProgress,
@@ -25,6 +23,7 @@ import {
   Add,
   FolderOutlined,
   PlayArrow as PlayArrowIcon,
+  StyleOutlined,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { routes } from '../../../../../../utils/constants';
@@ -32,10 +31,87 @@ import {
   getFlashcardsByFolderAPI,
   deleteFlashcardAPI,
 } from '../../../../../../apis';
-import Cards from '../../../../../../components/Card/Card';
-import StudyFlashcardsModal from './StudyFlashcardsModal';
+import FlashcardCard from '../../../../../../components/Flashcard/FlashcardCard';
 import { updateFlashcardCount } from '../../../../../../redux/folder/folderSlice';
+import FlashcardPreviewModal from './FlashcardPreviewModal';
+import { gamify as t, btn3d } from '../../../../../../theme';
 
+/* ─── Count badge ────────────────────────────────────────────────────────── */
+const CountBadge = ({ count }) =>
+  count > 0 ? (
+    <Box
+      component="span"
+      sx={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 0.5,
+        px: 1.2,
+        py: 0.4,
+        borderRadius: 2,
+        fontSize: '0.75rem',
+        fontWeight: 900,
+        bgcolor: t.blueBg,
+        color: t.blue,
+        border: `2px solid ${t.blue}`,
+      }}
+    >
+      <StyleOutlined sx={{ fontSize: 12 }} />
+      {count}
+    </Box>
+  ) : null;
+
+/* ─── Empty state ────────────────────────────────────────────────────────── */
+const EmptyState = ({ onCreate }) => (
+  <Box
+    sx={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: 320,
+      gap: 2,
+      px: 3,
+    }}
+  >
+    <Box
+      sx={{
+        width: 80,
+        height: 80,
+        borderRadius: 4,
+        bgcolor: t.surface,
+        border: `2px solid ${t.gray}`,
+        borderBottom: `4px solid ${t.gray}`,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        mb: 1,
+      }}
+    >
+      <span style={{ fontSize: 36 }}>📁</span>
+    </Box>
+    <Box sx={{ textAlign: 'center' }}>
+      <Typography sx={{ fontWeight: 900, color: t.text, fontSize: '1.05rem', mb: 0.5 }}>
+        Chưa có flashcard nào
+      </Typography>
+      <Typography sx={{ color: t.sub, fontSize: '0.85rem', fontWeight: 700, maxWidth: 280, mx: 'auto' }}>
+        Tạo flashcard đầu tiên để bắt đầu!
+      </Typography>
+    </Box>
+    <Button
+      variant="contained"
+      startIcon={<Add />}
+      onClick={onCreate}
+      disableElevation
+      sx={{ ...btn3d(t.green, t.greenDark), mt: 1, px: 3, py: 1 }}
+    >
+      Tạo Flashcard
+    </Button>
+  </Box>
+);
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MAIN COMPONENT
+══════════════════════════════════════════════════════════════════════════ */
 const FolderDetailModal = ({
   open,
   onClose,
@@ -45,6 +121,8 @@ const FolderDetailModal = ({
   onFlashcardChange,
 }) => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+
   const [anchorEl, setAnchorEl] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [folderTitle, setFolderTitle] = useState('');
@@ -53,9 +131,22 @@ const FolderDetailModal = ({
   const [flashcards, setFlashcards] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedFolder, setSelectedFolder] = useState(null);
-  const [isStudyModalOpen, setIsStudyModalOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
-  const navigate = useNavigate();
+
+  const fetchFlashcards = useCallback(async () => {
+    const folderId = folder?.id || folder?._id;
+    if (!folderId) return;
+    setLoading(true);
+    try {
+      const response = await getFlashcardsByFolderAPI(folderId);
+      setFlashcards(Array.isArray(response.data) ? response.data : []);
+    } catch {
+      setFlashcards([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [folder?.id, folder?._id]);
 
   useEffect(() => {
     const folderId = folder?.id || folder?._id;
@@ -65,42 +156,12 @@ const FolderDetailModal = ({
       setEditMode(false);
       fetchFlashcards();
     } else {
-      // Reset states when modal is closed or folder is deleted
       setFlashcards([]);
       setSelectedFolder(null);
       setFolderTitle('');
       setEditMode(false);
     }
-  }, [folder, open]);
-
-  const fetchFlashcards = async () => {
-    const folderId = folder?.id || folder?._id;
-    if (!folderId) return;
-
-    setLoading(true);
-    try {
-      const response = await getFlashcardsByFolderAPI(folderId);
-      setFlashcards(Array.isArray(response.data) ? response.data : []);
-    } catch (error) {
-      console.error('Error fetching flashcards:', error);
-      setFlashcards([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleMenuOpen = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
-
-  const handleEditClick = () => {
-    setEditMode(true);
-    handleMenuClose();
-  };
+  }, [folder, open, fetchFlashcards]);
 
   const handleSaveEdit = async () => {
     const folderId = selectedFolder?.id || selectedFolder?._id;
@@ -108,23 +169,11 @@ const FolderDetailModal = ({
       try {
         setIsUpdating(true);
         if (folderTitle.trim() !== selectedFolder.title) {
-          console.log(
-            'Updating folder:',
-            folderId,
-            'with new title:',
-            folderTitle.trim()
-          );
           await onEdit(folderId, { title: folderTitle.trim() });
-          // Update local state with new title
-          setSelectedFolder((prev) => ({
-            ...prev,
-            title: folderTitle.trim(),
-          }));
-        } else {
-          console.log('Title unchanged, skipping update');
+          setSelectedFolder((prev) => ({ ...prev, title: folderTitle.trim() }));
         }
-      } catch (error) {
-        console.error('Error updating folder:', error);
+      } catch (e) {
+        console.error(e);
       } finally {
         setIsUpdating(false);
         setEditMode(false);
@@ -134,24 +183,15 @@ const FolderDetailModal = ({
     }
   };
 
-  const handleDeleteClick = () => {
-    handleMenuClose();
-    setDeleteDialogOpen(true);
-  };
-
   const handleConfirmDelete = async () => {
     const folderId = selectedFolder?.id || selectedFolder?._id;
     if (onDelete && selectedFolder && folderId) {
       try {
-        // Close modal first
         setDeleteDialogOpen(false);
         onClose();
-        // Then delete folder
         await onDelete(folderId);
-        // Show success message
         toast.success('Xóa thư mục thành công!');
-      } catch (error) {
-        console.error('Error deleting folder:', error);
+      } catch {
         toast.error('Xóa thư mục thất bại. Vui lòng thử lại!');
       }
     }
@@ -161,27 +201,14 @@ const FolderDetailModal = ({
     const folderId = selectedFolder?.id || selectedFolder?._id;
     try {
       await deleteFlashcardAPI(cardId);
-      setFlashcards(flashcards.filter((card) => (card.id || card._id) !== cardId));
+      const next = flashcards.filter((c) => (c.id || c._id) !== cardId);
+      setFlashcards(next);
       const updatedCount = (selectedFolder.flashcard_count || 0) - 1;
-      const updatedFolder = {
-        ...selectedFolder,
-        flashcard_count: updatedCount,
-      };
-      setSelectedFolder(updatedFolder);
-
-      // Update Redux store
-      dispatch(
-        updateFlashcardCount({
-          folderId: folderId,
-          count: updatedCount,
-        })
-      );
-
-      if (onFlashcardChange) {
-        onFlashcardChange(folderId, updatedCount);
-      }
-    } catch (error) {
-      console.error('Error deleting flashcard:', error);
+      setSelectedFolder((prev) => ({ ...prev, flashcard_count: updatedCount }));
+      dispatch(updateFlashcardCount({ folderId, count: updatedCount }));
+      onFlashcardChange?.(folderId, updatedCount);
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -190,14 +217,110 @@ const FolderDetailModal = ({
     navigate(routes.FLASHCARD_SNAPLANG);
   };
 
-  const handleStartStudy = () => {
-    setIsStudyModalOpen(true);
-  };
-
   if (!selectedFolder) return null;
+
+  /* ── header content ── */
+  const headerContent = editMode ? (
+    <Box
+      sx={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        px: 2.5,
+        py: 2,
+        borderBottom: `2px solid ${t.gray}`,
+        bgcolor: '#fff',
+      }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flex: 1 }}>
+        <Avatar sx={{ bgcolor: t.blueBg, color: t.blue, width: 38, height: 38, border: `2px solid ${t.blue}` }}>
+          <FolderOutlined fontSize="small" />
+        </Avatar>
+        <TextField
+          value={folderTitle}
+          onChange={(e) => setFolderTitle(e.target.value)}
+          variant="outlined"
+          size="small"
+          autoFocus
+          inputProps={{ maxLength: 30 }}
+          sx={{
+            minWidth: 220,
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 3,
+              fontSize: '0.9rem',
+              fontWeight: 900,
+              '& fieldset': { borderWidth: 2, borderColor: t.gray },
+              '&.Mui-focused fieldset': { borderColor: t.blue },
+            },
+          }}
+        />
+      </Box>
+      <Stack direction="row" spacing={1}>
+        <Button onClick={() => setEditMode(false)} variant="outlined" size="small" disableElevation
+          sx={{ borderRadius: 3, textTransform: 'uppercase', fontWeight: 900, fontSize: '0.78rem', color: t.sub, borderColor: t.gray, borderWidth: 2, borderBottom: `4px solid ${t.grayDark}`, '&:active': { borderBottomWidth: 0, transform: 'translateY(4px)' } }}
+        >
+          Hủy
+        </Button>
+        <Button onClick={handleSaveEdit} variant="contained" size="small" disableElevation
+          disabled={!folderTitle.trim() || isUpdating || folderTitle.trim() === selectedFolder.title}
+          sx={{ ...btn3d(t.green, t.greenDark), px: 2.5 }}
+        >
+          {isUpdating ? <CircularProgress size={14} color="inherit" /> : 'Lưu'}
+        </Button>
+      </Stack>
+    </Box>
+  ) : (
+    <Box
+      sx={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        px: 2.5,
+        py: 2,
+        borderBottom: `2px solid ${t.gray}`,
+        bgcolor: '#fff',
+      }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
+        <Avatar sx={{ bgcolor: t.blueBg, color: t.blue, width: 42, height: 42, flexShrink: 0, border: `2px solid ${t.blue}` }}>
+          <FolderOutlined fontSize="small" />
+        </Avatar>
+        <Box sx={{ minWidth: 0 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography noWrap sx={{ fontWeight: 900, fontSize: '1.05rem', color: t.text, lineHeight: 1.2 }}>
+              {selectedFolder.title}
+            </Typography>
+            <CountBadge count={selectedFolder.flashcard_count} />
+          </Box>
+        </Box>
+      </Box>
+
+      <Stack direction="row" spacing={0.8} alignItems="center" flexShrink={0}>
+        {flashcards.length > 0 && (
+          <Button variant="contained" startIcon={<StyleOutlined sx={{ fontSize: '1rem !important' }} />} size="small" onClick={() => setPreviewOpen(true)} disableElevation
+            sx={{ ...btn3d(t.blue, t.blueDark), px: 2, py: 0.7, fontSize: '0.75rem' }}>
+            Xem thẻ
+          </Button>
+        )}
+        <Button variant="outlined" startIcon={<Add sx={{ fontSize: '1rem !important' }} />} size="small" onClick={handleCreateFlashcard} disableElevation
+          sx={{ borderRadius: 3, textTransform: 'uppercase', fontWeight: 900, fontSize: '0.75rem', px: 2, py: 0.7, color: t.text, borderColor: t.gray, borderWidth: 2, borderBottom: `4px solid ${t.grayDark}`, '&:hover': { bgcolor: t.surface }, '&:active': { borderBottomWidth: 0, transform: 'translateY(4px)' } }}>
+          Thêm
+        </Button>
+        <IconButton onClick={(e) => setAnchorEl(e.currentTarget)} size="small"
+          sx={{ borderRadius: 3, color: t.sub, border: `2px solid ${t.gray}`, width: 34, height: 34, '&:hover': { bgcolor: t.surface } }}>
+          <MoreVert sx={{ fontSize: 18 }} />
+        </IconButton>
+        <IconButton onClick={onClose} size="small"
+          sx={{ borderRadius: 3, color: t.sub, border: `2px solid ${t.gray}`, width: 34, height: 34, '&:hover': { bgcolor: t.redBg, color: t.red, borderColor: t.red } }}>
+          <Close sx={{ fontSize: 18 }} />
+        </IconButton>
+      </Stack>
+    </Box>
+  );
 
   return (
     <>
+      {/* ── Main Dialog ──────────────────────────────────────────────────── */}
       <Dialog
         open={open}
         onClose={onClose}
@@ -205,384 +328,161 @@ const FolderDetailModal = ({
         fullWidth
         PaperProps={{
           sx: {
-            borderRadius: '20px',
+            borderRadius: 4,
             overflow: 'hidden',
-            boxShadow: '0 20px 50px rgba(0,0,0,0.1)',
-            height: '80vh',
-            maxHeight: '800px',
+            border: `2px solid ${t.gray}`,
+            borderBottom: `4px solid ${t.grayDark}`,
+            boxShadow: '0 20px 60px rgba(0,0,0,0.12)',
+            height: '82vh',
+            maxHeight: 820,
             display: 'flex',
             flexDirection: 'column',
           },
         }}
       >
-        {/* Header */}
+        {headerContent}
+
         <Box
           sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            borderBottom: '1px solid rgba(0,0,0,0.08)',
-            padding: '14px 20px',
-            backgroundColor: '#ffffff',
+            flex: 1,
+            overflow: 'auto',
+            bgcolor: t.surface,
+            p: loading || flashcards.length === 0 ? 0 : 2.5,
+            '&::-webkit-scrollbar': { width: 5 },
+            '&::-webkit-scrollbar-thumb': {
+              background: t.gray,
+              borderRadius: 10,
+            },
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Avatar
-              sx={{
-                bgcolor: 'rgba(59, 130, 246, 0.1)',
-                color: 'rgb(59, 130, 246)',
-                width: 40,
-                height: 40,
-              }}
-            >
-              <FolderOutlined fontSize="small" />
-            </Avatar>
-
-            {editMode ? (
-              <TextField
-                value={folderTitle}
-                onChange={(e) => setFolderTitle(e.target.value)}
-                variant="outlined"
-                size="small"
-                autoFocus
-                inputProps={{ maxLength: 30 }}
-                sx={{
-                  minWidth: '220px',
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: '10px',
-                  },
-                }}
-              />
-            ) : (
-              <Typography
-                variant="h6"
-                sx={{ fontWeight: 600, color: '#1e293b' }}
-              >
-                {selectedFolder.title}
-              </Typography>
-            )}
-
-            {!editMode && selectedFolder.flashcard_count > 0 && (
-              <Chip
-                label={`${selectedFolder.flashcard_count} flashcards`}
-                size="small"
-                sx={{
-                  height: '20px',
-                  fontSize: '0.75rem',
-                  fontWeight: 500,
-                  bgcolor: 'rgba(59, 130, 246, 0.1)',
-                  color: 'rgb(59, 130, 246)',
-                }}
-              />
-            )}
-          </Box>
-
-          <Stack direction="row" spacing={1} alignItems="center">
-            {editMode ? (
-              <>
-                <Button
-                  onClick={() => setEditMode(false)}
-                  variant="outlined"
-                  color="inherit"
-                  size="small"
-                  sx={{
-                    borderRadius: '8px',
-                    textTransform: 'none',
-                    fontWeight: 500,
-                  }}
-                >
-                  Hủy
-                </Button>
-                <Button
-                  onClick={handleSaveEdit}
-                  variant="contained"
-                  color="primary"
-                  size="small"
-                  disabled={
-                    !folderTitle.trim() ||
-                    isUpdating ||
-                    folderTitle.trim() === selectedFolder.title
-                  }
-                  sx={{
-                    borderRadius: '8px',
-                    textTransform: 'none',
-                    fontWeight: 500,
-                    boxShadow: 'none',
-                  }}
-                >
-                  Lưu
-                </Button>
-              </>
-            ) : (
-              <>
-                {flashcards.length > 0 && (
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    startIcon={<PlayArrowIcon />}
-                    size="small"
-                    onClick={handleStartStudy}
-                    sx={{
-                      borderRadius: '8px',
-                      textTransform: 'none',
-                      fontWeight: 500,
-                      boxShadow: 'none',
-                    }}
-                  >
-                    Bắt đầu học
-                  </Button>
-                )}
-                <Button
-                  variant="contained"
-                  color="primary"
-                  startIcon={<Add />}
-                  size="small"
-                  onClick={handleCreateFlashcard}
-                  sx={{
-                    borderRadius: '8px',
-                    textTransform: 'none',
-                    fontWeight: 500,
-                    boxShadow: 'none',
-                  }}
-                >
-                  Thêm Flashcard
-                </Button>
-                <IconButton
-                  onClick={handleMenuOpen}
-                  sx={{
-                    borderRadius: '8px',
-                    color: '#64748b',
-                    padding: '6px',
-                  }}
-                >
-                  <MoreVert fontSize="small" />
-                </IconButton>
-                <IconButton
-                  onClick={onClose}
-                  sx={{
-                    borderRadius: '8px',
-                    color: '#64748b',
-                    padding: '6px',
-                  }}
-                >
-                  <Close fontSize="small" />
-                </IconButton>
-              </>
-            )}
-          </Stack>
-        </Box>
-
-        {/* Content */}
-        <Box sx={{ flexGrow: 1, overflow: 'auto', bgcolor: '#f8fafc', p: 3 }}>
           {loading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-              <CircularProgress />
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+              <CircularProgress size={32} sx={{ color: t.blue }} />
             </Box>
           ) : flashcards.length === 0 ? (
-            <Paper
-              elevation={0}
+            <EmptyState onCreate={handleCreateFlashcard} />
+          ) : (
+            <Box
               sx={{
-                textAlign: 'center',
-                padding: '40px 20px',
-                borderRadius: '16px',
-                bgcolor: '#ffffff',
-                border: '1px dashed rgba(0,0,0,0.1)',
+                display: 'grid',
+                gridTemplateColumns: {
+                  xs: '1fr',
+                  sm: 'repeat(2, minmax(0, 1fr))',
+                  lg: 'repeat(3, minmax(0, 1fr))',
+                },
+                gap: 2,
+                alignItems: 'stretch',
               }}
             >
-              <Avatar
-                sx={{
-                  bgcolor: 'rgba(59, 130, 246, 0.1)',
-                  color: 'rgb(59, 130, 246)',
-                  width: 56,
-                  height: 56,
-                  margin: '0 auto 16px',
-                }}
-              >
-                <FolderOutlined sx={{ fontSize: 28 }} />
-              </Avatar>
-              <Typography
-                variant="h6"
-                sx={{ fontWeight: 600, color: '#1e293b', mb: 1 }}
-              >
-                Chưa có flashcard nào
-              </Typography>
-              <Typography
-                variant="body2"
-                sx={{
-                  color: '#64748b',
-                  mb: 3,
-                  maxWidth: '400px',
-                  mx: 'auto',
-                }}
-              >
-                Hãy tạo flashcard đầu tiên để bắt đầu học tập hiệu quả
-              </Typography>
-              <Button
-                variant="contained"
-                color="primary"
-                startIcon={<Add />}
-                onClick={handleCreateFlashcard}
-                sx={{
-                  borderRadius: '8px',
-                  textTransform: 'none',
-                  fontWeight: 500,
-                  boxShadow: 'none',
-                  padding: '6px 16px',
-                }}
-              >
-                Tạo Flashcard Đầu Tiên
-              </Button>
-            </Paper>
-          ) : (
-            <Box>
-              {flashcards.map((card) => (
-                <Cards
-                  key={card.id || card._id}
-                  card={{
-                    ...card,
-                    id: card.id || card._id,
-                    imageUrl: card.image_url,
-                  }}
-                  onRemove={handleRemoveCard}
-                />
-              ))}
+              {flashcards.map((card) => {
+                const id = card.id || card._id;
+                return (
+                  <FlashcardCard
+                    key={id}
+                    card={{
+                      ...card,
+                      id,
+                      imageUrl: card.image_url || card.imageUrl || null,
+                    }}
+                    onRemove={handleRemoveCard}
+                  />
+                );
+              })}
             </Box>
           )}
         </Box>
       </Dialog>
 
-      {/* Menu for Edit/Delete */}
+      {/* ── Dropdown menu ────────────────────────────────────────────────── */}
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
-        onClose={handleMenuClose}
+        onClose={() => setAnchorEl(null)}
         PaperProps={{
           sx: {
-            borderRadius: '12px',
-            boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
-            padding: '6px',
-            minWidth: '180px',
+            borderRadius: 3,
+            border: `2px solid ${t.gray}`,
+            borderBottom: `4px solid ${t.grayDark}`,
+            boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+            p: '4px',
+            minWidth: 180,
           },
         }}
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
         <MenuItem
-          onClick={handleEditClick}
-          sx={{
-            borderRadius: '8px',
-            padding: '8px 12px',
-            margin: '2px 0',
-            '&:hover': {
-              backgroundColor: 'rgba(59, 130, 246, 0.08)',
-            },
-          }}
+          onClick={() => { setEditMode(true); setAnchorEl(null); }}
+          sx={{ borderRadius: 2, px: 1.5, py: 1, gap: 1.2, '&:hover': { bgcolor: t.blueBg } }}
         >
-          <Edit fontSize="small" className="text-blue-500 mr-2" />
-          <Typography variant="body2" className="font-medium">
-            Đổi tên thư mục
+          <Edit fontSize="small" sx={{ color: t.blue, fontSize: 16 }} />
+          <Typography sx={{ fontSize: '0.85rem', fontWeight: 900, color: t.text }}>
+            Đổi tên
           </Typography>
         </MenuItem>
-        <Divider sx={{ margin: '4px 0' }} />
+        <Divider sx={{ my: '4px', borderColor: t.gray }} />
         <MenuItem
-          onClick={handleDeleteClick}
-          sx={{
-            borderRadius: '8px',
-            padding: '8px 12px',
-            margin: '2px 0',
-            '&:hover': {
-              backgroundColor: 'rgba(239, 68, 68, 0.08)',
-            },
-          }}
+          onClick={() => { setAnchorEl(null); setDeleteDialogOpen(true); }}
+          sx={{ borderRadius: 2, px: 1.5, py: 1, gap: 1.2, '&:hover': { bgcolor: t.redBg } }}
         >
-          <Delete fontSize="small" className="text-red-500 mr-2" />
-          <Typography variant="body2" className="font-medium text-red-500">
+          <Delete fontSize="small" sx={{ color: t.red, fontSize: 16 }} />
+          <Typography sx={{ fontSize: '0.85rem', fontWeight: 900, color: t.red }}>
             Xóa thư mục
           </Typography>
         </MenuItem>
       </Menu>
 
-      {/* Delete Confirmation Dialog */}
+      {/* ── Flashcard Preview Modal ───────────────────────────────────────── */}
+      <FlashcardPreviewModal
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        cards={flashcards}
+      />
+
+      {/* ── Delete confirmation ───────────────────────────────────────────── */}
       <Dialog
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
         maxWidth="xs"
         fullWidth
         PaperProps={{
-          sx: {
-            borderRadius: '16px',
-            boxShadow: '0 20px 50px rgba(0,0,0,0.15)',
-          },
+          sx: { borderRadius: 4, border: `2px solid ${t.gray}`, borderBottom: `4px solid ${t.grayDark}`, boxShadow: '0 20px 60px rgba(0,0,0,0.12)' },
         }}
       >
-        <Box sx={{ p: 2.5 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
-            <Avatar
-              sx={{
-                bgcolor: 'rgba(239, 68, 68, 0.1)',
-                color: '#ef4444',
-                width: 36,
-                height: 36,
-              }}
-            >
-              <Delete fontSize="small" />
-            </Avatar>
-            <Typography
-              variant="h6"
-              sx={{ fontWeight: 600, fontSize: '1.1rem' }}
-            >
-              Xóa thư mục
-            </Typography>
+        <Box sx={{ p: 3 }}>
+          <Box
+            sx={{
+              width: 56, height: 56, borderRadius: 3, bgcolor: t.redBg, border: `2px solid ${t.red}`, borderBottom: `4px solid ${t.redDark}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2.5,
+            }}
+          >
+            <Delete sx={{ color: t.red, fontSize: 26 }} />
           </Box>
 
-          <Typography variant="body2" sx={{ color: '#475569', mb: 1 }}>
-            Bạn có chắc chắn muốn xóa thư mục{' '}
-            <span style={{ fontWeight: 600 }}>"{selectedFolder.title}"</span>?
+          <Typography sx={{ fontWeight: 900, fontSize: '1.1rem', color: t.text, mb: 1 }}>
+            Xóa thư mục?
           </Typography>
-          <Typography variant="body2" sx={{ color: '#475569', mb: 3 }}>
-            Tất cả flashcards trong thư mục này sẽ bị xóa và không thể khôi
-            phục.
+          <Typography sx={{ color: t.sub, fontSize: '0.88rem', fontWeight: 700, lineHeight: 1.6, mb: 3 }}>
+            Tất cả flashcard trong{' '}
+            <Box component="span" sx={{ fontWeight: 900, color: t.text }}>
+              "{selectedFolder.title}"
+            </Box>{' '}
+            sẽ bị xóa vĩnh viễn.
           </Typography>
 
           <Stack direction="row" spacing={1.5}>
-            <Button
-              onClick={() => setDeleteDialogOpen(false)}
-              variant="outlined"
-              color="inherit"
-              fullWidth
-              sx={{
-                borderRadius: '8px',
-                textTransform: 'none',
-                fontWeight: 500,
-                p: 1,
-              }}
-            >
+            <Button onClick={() => setDeleteDialogOpen(false)} variant="outlined" fullWidth disableElevation
+              sx={{ borderRadius: 3, textTransform: 'uppercase', fontWeight: 900, py: 1.2, borderColor: t.gray, borderWidth: 2, borderBottom: `4px solid ${t.grayDark}`, color: t.sub, '&:active': { borderBottomWidth: 0, transform: 'translateY(4px)' } }}>
               Hủy
             </Button>
-            <Button
-              onClick={handleConfirmDelete}
-              variant="contained"
-              color="error"
-              fullWidth
-              sx={{
-                borderRadius: '8px',
-                textTransform: 'none',
-                fontWeight: 500,
-                boxShadow: 'none',
-                p: 1,
-              }}
-            >
-              Xóa thư mục
+            <Button onClick={handleConfirmDelete} variant="contained" fullWidth disableElevation
+              sx={{ ...btn3d(t.red, t.redDark), py: 1.2 }}>
+              Xóa
             </Button>
           </Stack>
         </Box>
       </Dialog>
 
-      <StudyFlashcardsModal
-        open={isStudyModalOpen}
-        onClose={() => setIsStudyModalOpen(false)}
-        folder={selectedFolder}
-      />
     </>
   );
 };

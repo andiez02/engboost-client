@@ -1,255 +1,232 @@
 # EngBoost - English Learning Platform
 
-EngBoost is a modern web application designed to help users learn English vocabulary through image recognition technology.
+EngBoost is a modern full-stack web application for learning English vocabulary through image recognition, AI-generated content, and spaced repetition.
 
 ## 📷 Features
 
-- **Image Recognition**: Upload images and get instant English vocabulary with Vietnamese translations
-- **Flashcard System**: Create, save, and organize flashcards to study vocabulary
-- **Study Progress Tracking**: Monitor your learning progress over time
-- **Course Management**: Access structured learning courses for different levels
-- **Personalized Learning**: Study at your own pace with customized learning paths
+- **Snaplang (Snap & Learn)**: Upload images → AI detects objects → auto-generate flashcards with English/Vietnamese
+- **Spaced Repetition (SRS)**: SM-2 algorithm schedules reviews at optimal intervals
+- **AI Deck Generation**: Generate vocabulary decks by topic using Gemini 2.5 Flash
+- **Flashcard Management**: Create, organize, and study flashcards in folders
+- **Study Mode**: Full-screen study session with flip cards, keyboard shortcuts, and 4-level rating
+- **Course System**: Structured video-based learning courses
 - **AI Chatbot**: Interactive English learning assistant
+- **Dashboard**: Overview of due cards, folders, and learning progress
+
+---
+
+## 🏗️ Architecture
+
+```
+engboost-frontend/   React + Vite + MUI + Redux Toolkit
+engboot-express/     Node.js + Express + TypeScript + Sequelize + PostgreSQL
+```
+
+### Backend (`engboot-express`)
+
+- **Runtime**: Node.js with TypeScript (`tsx watch`)
+- **Framework**: Express.js
+- **ORM**: Sequelize v6 with PostgreSQL
+- **Auth**: JWT (access token in httpOnly cookie, refresh token 15 days)
+- **AI**: Google Gemini 2.5 Flash API (`gemini-2.5-flash`)
+- **Image Recognition**: Snaplang detection API
+- **Port**: `5050`
+
+#### API Modules
+
+| Module | Routes | Description |
+|--------|--------|-------------|
+| `auth` | `POST /api/auth/*` | Login, register, verify, refresh |
+| `user` | `GET/PATCH /api/users/*` | Profile, avatar |
+| `folder` | `CRUD /api/folders` | Flashcard folder management |
+| `flashcard` | `CRUD /api/flashcards` | Flashcard CRUD + SRS review |
+| `study` | `GET/POST /api/study/*` | Due cards, review submission, stats |
+| `deck` | `POST /api/decks/generate` | AI-generated vocabulary decks |
+| `course` | `/api/courses/*` | Course management |
+| `snaplang` | `POST /api/snaplang/detect` | Image → vocabulary detection |
+
+#### Database Schema (PostgreSQL)
+
+```
+users           id, email, password, username, avatar, role, is_active
+folders         id, title, user_id, flashcard_count, is_public
+flashcards      id, english, vietnamese, object, image_url, folder_id, user_id,
+                is_public, repetition, interval, ease_factor,
+                next_review_at, last_reviewed_at
+courses         id, title, description, video_url, user_id, is_public
+user_courses    id, user_id, course_id, registered_at
+```
+
+#### SRS Engine (`src/utils/srsEngine.ts`)
+
+Implements the SM-2 spaced repetition algorithm:
+- Rating 0 (Again) → reset, review tomorrow
+- Rating 1 (Hard) → short interval, lower ease
+- Rating 2 (Good) → normal progression
+- Rating 3 (Easy) → longer interval, higher ease
+- `next_review_at` updated after each review
+
+### Frontend (`engboost-frontend`)
+
+- **Framework**: React 18 + Vite
+- **UI**: Material UI (MUI) v5 — primary component library
+- **Styling**: TailwindCSS for layout utilities
+- **State**: Redux Toolkit + Redux Persist
+- **Routing**: React Router v6
+- **HTTP**: Axios with JWT interceptors (auto-refresh on 401)
+- **Port**: `5173`
+
+#### Redux Slices
+
+| Slice | State |
+|-------|-------|
+| `user` | Auth, current user |
+| `folders` | Folder list, CRUD |
+| `study` | Due cards, session progress, flip state |
+
+---
 
 ## 🌐 Application Pages
 
-### Public Pages
+### Public
 
-#### 🏠 Home (`/`)
-- Landing page with platform introduction
-- Feature highlights and benefits
-- Call-to-action for registration
-- Testimonials and success stories
+| Route | Page |
+|-------|------|
+| `/home` | Landing page |
+| `/course` | Browse courses |
+| `/chatbot_intro` | Chatbot introduction |
+| `/login`, `/register` | Authentication |
+| `/account/verification` | Email verification |
 
-#### 📚 Courses (`/course`)
-- Browse available English learning courses
-- Filter courses by level and category
-- View course details and curriculum
-- Enroll in courses
+### User (Protected — role: CLIENT)
 
-#### 🤖 Chatbot Introduction (`/chatbot-intro`)
-- Introduction to AI-powered English learning assistant
-- Feature showcase and use cases
-- Demo and examples
+| Route | Page |
+|-------|------|
+| `/dashboard` | Overview: folders, due cards, course progress |
+| `/flashcard/snaplang` | Snap & Learn — image → flashcards |
+| `/flashcard/folders` | My Folders — manage flashcard folders |
+| `/flashcard/discover` | Discover — public folders + AI deck generator |
+| `/study?folderId=<id>` | Study Mode — SRS session for a folder |
+| `/study` | Study Mode — all due cards across folders |
+| `/my_course` | My enrolled courses |
+| `/chatbot` | AI English assistant |
+| `/settings/account` | Profile settings |
+| `/settings/security` | Password & security |
 
-#### 🔐 Authentication (`/auth`)
-- **Login**: User authentication with email/password
-- **Register**: New user registration with email verification
-- **Account Verification**: Email verification process
+### Admin (Protected — role: ADMIN)
 
-### User Dashboard Pages
+| Route | Page |
+|-------|------|
+| `/admin/dashboard` | System overview |
+| `/admin/user_management` | User management |
+| `/admin/course_management` | Course management |
+| `/admin/flashcard_management` | Flashcard moderation |
+| `/admin/blog_management` | Blog management |
 
-#### � Dashboard (`/dashboard`)
-- Overview of learning progress
-- Recent activity summary
-- Course progress tracking
-- Flashcard statistics
-- Quick access to learning tools
+---
 
-#### 💬 Chatbot (`/chatbot`)
-- Interactive AI English learning assistant
-- Real-time conversation practice
-- Grammar and vocabulary help
-- Personalized learning suggestions
+## 🎴 Flashcard Tab Details
 
-#### 📖 My Courses (`/my-course`)
-- List of enrolled courses
-- Course progress tracking
-- Continue learning from where you left off
-- Course completion certificates
+### Tab 1 — Snaplang
+- Upload image (file picker, drag & drop, or camera)
+- AI detects objects → generates `english`, `vietnamese`, `object` (example sentence)
+- Save to existing or new folder
+- After save: "Study now" action button appears → navigates to `/study?folderId=<id>`
 
-#### 🎴 Flashcards (`/flashcard`)
-Main flashcard management hub with three tabs:
+### Tab 2 — My Folders
+- Grid of folder cards with flashcard count
+- Each folder has a "Study" button → `/study?folderId=<id>`
+- Click folder → `FolderDetailModal` with full flashcard list
+- "Học ngay" button in modal → SRS study session
+- Create / rename / delete folders (updates Redux state immediately, no reload needed)
 
-##### Tab 1: Snaplang (Snap & Learn)
-- **Image Upload**: Upload photos via file picker or camera
-- **Drag & Drop**: Drag images directly into the upload area
-- **Object Detection**: AI-powered image recognition
-- **Instant Flashcards**: Auto-generate flashcards from detected objects
-- **Preview**: Review generated flashcards before saving
-- **Save to Folder**: Organize flashcards into existing or new folders
-- **Real-time Results**: See detection results immediately
+### Tab 3 — Discover
+- Browse public folders
+- **Generate Vocabulary by Topic** section at top:
+  - Topics: Food, Travel, Work, Daily Life, Technology, Health
+  - Calls `POST /api/decks/generate` → Gemini generates 10 vocab items
+  - Creates folder + inserts flashcards → redirects to `/study?folderId=<id>`
 
-##### Tab 2: My Folders
-- **Folder Management**: Create, view, and organize flashcard folders
-- **Folder Statistics**: View flashcard count per folder
-- **Public/Private**: Toggle folder visibility
-- **Quick Access**: Navigate to folder contents
-- **Bulk Operations**: Manage multiple folders at once
+### Study Tab (nav button)
+- Navigates directly to `/study` (all due cards, no folder filter)
 
-##### Tab 3: Discover
-- **Public Flashcards**: Browse community-shared flashcards
-- **Search & Filter**: Find flashcards by topic or keyword
-- **Import**: Add public flashcards to your collection
-- **Popular Content**: Discover trending flashcard sets
+---
 
-#### ⚙️ Settings (`/settings`)
-- **Account Tab**: Update profile information, avatar, username
-- **Security Tab**: Change password, manage sessions
+## 🧠 Study Mode (`/study`)
 
-### Admin Pages
+Full-screen SRS study session:
 
-#### 🎛️ Admin Dashboard (`/admin`)
-- System overview and statistics
-- User activity monitoring
-- Content management overview
-- Platform analytics
+- Loads due cards via `GET /api/study?folderId=<id>`
+- 3D flip card animation (click or press `Space`)
+- After flip: rate recall with 4 buttons or keyboard `1`–`4`
+  - `1` Again · `2` Hard · `3` Good · `4` Easy
+- Progress bar + card counter
+- On session complete: "Refresh" or "Back to Flashcards"
 
-#### 👥 User Management (`/admin/users`)
-- View all registered users
-- User role management
-- Account status control
-- User activity logs
+---
 
-#### 📚 Course Management (`/admin/courses`)
-- Create and edit courses
-- Manage course content and curriculum
-- Set course pricing and availability
-- Monitor course enrollments
+## 🤖 AI Deck Generation
 
-#### 🎴 Flashcard Management (`/admin/flashcards`)
-- Review user-generated flashcards
-- Moderate public flashcard content
-- Manage flashcard categories
-- Content quality control
+`POST /api/decks/generate`
 
-#### 📝 Blog Management (`/admin/blogs`)
-- Create and publish blog posts
-- Edit existing content
-- Manage blog categories and tags
-- Content scheduling
+```json
+{ "topic": "Work", "level": "beginner", "count": 10 }
+```
 
-#### ⚙️ Admin Settings (`/admin/settings`)
-- **Account Tab**: Admin profile management
-- **Security Tab**: Admin security settings
+- Calls Gemini 2.5 Flash with structured prompt
+- Returns JSON array of `{ word, meaning_vi, example }`
+- Deduplicates, validates count
+- Creates folder with timestamped title (avoids unique constraint)
+- Bulk inserts flashcards with `next_review_at = now`
+- Returns `{ folderId }`
 
-### Error Pages
+---
 
-#### 🚫 404 Not Found (`/404`)
-- Custom 404 error page
-- Navigation back to home
-- Helpful suggestions
+## � Tech Stack
 
-## 🚀 Core Functionality
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 18, Vite, MUI v5, TailwindCSS |
+| State | Redux Toolkit, Redux Persist |
+| Backend | Node.js, Express, TypeScript |
+| ORM | Sequelize v6 |
+| Database | PostgreSQL |
+| Auth | JWT (httpOnly cookie) |
+| AI | Google Gemini 2.5 Flash |
+| SRS | SM-2 algorithm |
 
-### Snap & Learn (Snaplang)
-
-Upload any image and EngBoost will automatically:
-
-1. Identify objects in the image using AI
-2. Generate relevant English vocabulary
-3. Provide Vietnamese translations
-4. Create flashcards for future study
-5. Allow saving to organized folders
-
-### Flashcard Management
-
-- Organize flashcards into folders
-- Create new folders or use existing ones
-- Public/private folder visibility
-- Review flashcards with interactive UI
-- Track your vocabulary growth
-
-### Course System
-
-- Structured learning paths
-- Progress tracking
-- Interactive lessons
-- Quizzes and assessments
-- Completion certificates
-
-### AI Chatbot
-
-- Real-time English conversation practice
-- Grammar and vocabulary assistance
-- Personalized learning recommendations
-- 24/7 availability
-
-## 🔧 Technology Stack
-
-- **Frontend**: React, Redux, Material UI, TailwindCSS
-- **UI/UX**: Modern, responsive design optimized for all devices
-- **State Management**: Redux Toolkit with Redux Persist
-- **Routing**: React Router
-- **Forms**: React Hook Form
-- **Notifications**: React Toastify
-- **Animations**: Framer Motion, AOS (Animate On Scroll)
-- **HTTP Client**: Axios with interceptors
-- **Icons**: Lucide React, Material Icons
+---
 
 ## 🛠️ Development Setup
 
 ### Prerequisites
+- Node.js v18+
+- PostgreSQL
+- Yarn (frontend), npm (backend)
 
-- Node.js (v18+ recommended)
-- Yarn package manager
-
-### Installation
+### Backend
 
 ```bash
-# Clone the repository
-git clone <repository-url>
+cd engboot-express
+cp .env.example .env   # fill in DB_* and GEMINI_API_KEY
+npm install
+npm run db:migrate     # run Sequelize migrations
+npm run dev            # tsx watch src/server.ts → port 5050
+```
 
-# Navigate to the project directory
+### Frontend
+
+```bash
 cd engboost-frontend
-
-# Install dependencies
 yarn install
-
-# Start the development server
-yarn dev
+yarn dev               # Vite → port 5173
 ```
 
-The app will run at `http://localhost:5173` by default.
-
-## 📦 Build for Production
-
-```bash
-# Build the app
-yarn build
-
-# Preview the production build
-yarn preview
-```
-
-## 🌐 Project Structure
-
-```
-src/
-├── components/          # Reusable UI components
-│   ├── Layout/         # Header, Sidebar, Footer
-│   ├── Course/         # Course-related components
-│   ├── Flashcard/      # Flashcard components
-│   └── SaveFlashcardModal/  # Modal for saving flashcards
-├── pages/              # Application pages
-│   ├── Auth/           # Authentication pages
-│   ├── UserPage/       # User dashboard pages
-│   ├── Admin/          # Admin panel pages
-│   ├── GeneralPage/    # Public pages
-│   └── Settings/       # Settings pages
-├── redux/              # Redux store, slices, and reducers
-│   ├── user/           # User authentication state
-│   ├── folder/         # Flashcard folder state
-│   └── store.js        # Redux store configuration
-├── utils/              # Utility functions and constants
-│   ├── authorizeAxios.js  # Axios interceptors
-│   └── constants.js    # App constants
-├── apis/               # API service integrations
-├── assets/             # Static assets (images, icons)
-└── modal/              # Modal system
-```
-
-## 🔐 Authentication & Authorization
-
-- JWT-based authentication
-- Access token (1 hour expiry) stored in httpOnly cookie
-- Refresh token (15 days expiry) for automatic token renewal
-- Automatic token refresh on 401/410 errors
-- Role-based access control (CLIENT, ADMIN)
+---
 
 ## 📝 Slogan
 
-**"Fuel your Fluency - Nâng tầm tiếng Anh của bạn"**
+**"Fuel your Fluency — Nâng tầm tiếng Anh của bạn"**
 
 ---
 

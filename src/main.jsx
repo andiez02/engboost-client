@@ -11,7 +11,7 @@ import ModalContainer from './modal/ModalSystem/ModalContainer';
 import { Provider } from 'react-redux';
 import { store } from './redux/store.js';
 import { ConfirmProvider } from 'material-ui-confirm';
-import { injectStore } from './utils/authorizeAxios.js';
+import { injectStore } from './utils/authorizedAxios.js';
 
 import { PersistGate } from 'redux-persist/integration/react';
 import { persistStore } from 'redux-persist';
