@@ -43,8 +43,8 @@ function Header() {
 
   const dashboardItems = [
     { path: routes.HOME, name: 'Trang chủ' },
-    { path: routes.COURSE, name: 'Khoá học' },
-    { path: routes.CHATBOT_INTRO, name: 'AI' },
+    // { path: routes.COURSE, name: 'Khoá học' },
+    // { path: routes.CHATBOT_INTRO, name: 'AI' },
   ];
 
   // Determine header background class - using vintage glassmorphism

@@ -3,22 +3,25 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Folders from './Folders/Folders';
 import Snaplang from './Snaplang/Snaplang';
 import Discover from './Discover/Discover';
+import Explore from './Explore/Explore';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import FolderIcon from '@mui/icons-material/Folder';
 import ExploreIcon from '@mui/icons-material/Explore';
-import SchoolIcon from '@mui/icons-material/School';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
 import { cn } from '../../../../modal/ModalSystem/utils/cn';
 
 const TABS = {
   SNAPLANG: 'snaplang',
   FOLDERS: 'folders',
   DISCOVER: 'discover',
+  EXPLORE: 'explore',
 };
 
 const TAB_CONFIG = [
   { value: TABS.SNAPLANG, label: 'TẠO THẺ MỚI', icon: CameraAltIcon, to: '/flashcard/snaplang' },
   { value: TABS.FOLDERS, label: 'BỘ SƯU TẬP', icon: FolderIcon, to: '/flashcard/folders' },
   { value: TABS.DISCOVER, label: 'KHÁM PHÁ', icon: ExploreIcon, to: '/flashcard/discover' },
+  { value: TABS.EXPLORE, label: 'EXPLORE', icon: LockOpenIcon, to: '/flashcard/explore' },
 ];
 
 function FlashcardTab({ headerSlot }) {
@@ -28,6 +31,7 @@ function FlashcardTab({ headerSlot }) {
   const getDefaultTab = useCallback(() => {
     if (location.pathname.includes(TABS.FOLDERS)) return TABS.FOLDERS;
     if (location.pathname.includes(TABS.DISCOVER)) return TABS.DISCOVER;
+    if (location.pathname.includes(TABS.EXPLORE)) return TABS.EXPLORE;
     return TABS.SNAPLANG;
   }, [location.pathname]);
 
@@ -87,6 +91,7 @@ function FlashcardTab({ headerSlot }) {
         {activeTab === TABS.SNAPLANG && <Snaplang />}
         {activeTab === TABS.FOLDERS && <Folders />}
         {activeTab === TABS.DISCOVER && <Discover />}
+        {activeTab === TABS.EXPLORE && <Explore />}
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import {
   Dialog,
@@ -22,10 +23,9 @@ import {
   Delete,
   Add,
   FolderOutlined,
-  PlayArrow as PlayArrowIcon,
   StyleOutlined,
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import ShareIcon from '@mui/icons-material/Share';
 import { routes } from '../../../../../../utils/constants';
 import {
   getFlashcardsByFolderAPI,
@@ -34,6 +34,7 @@ import {
 import FlashcardCard from '../../../../../../components/Flashcard/FlashcardCard';
 import { updateFlashcardCount } from '../../../../../../redux/folder/folderSlice';
 import FlashcardPreviewModal from './FlashcardPreviewModal';
+import ShareModal from '../../../../../../components/Post/ShareModal';
 import { gamify as t, btn3d } from '../../../../../../theme';
 
 /* ─── Count badge ────────────────────────────────────────────────────────── */
@@ -132,6 +133,7 @@ const FolderDetailModal = ({
   const [loading, setLoading] = useState(false);
   const [selectedFolder, setSelectedFolder] = useState(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
 
 
   const fetchFlashcards = useCallback(async () => {
@@ -302,6 +304,16 @@ const FolderDetailModal = ({
             Xem thẻ
           </Button>
         )}
+        <Button
+          variant="contained"
+          startIcon={<ShareIcon sx={{ fontSize: '1rem !important' }} />}
+          size="small"
+          onClick={() => setShareOpen(true)}
+          disableElevation
+          sx={{ ...btn3d(t.green, t.greenDark), px: 2, py: 0.7, fontSize: '0.75rem' }}
+        >
+          Share 🌍
+        </Button>
         <Button variant="outlined" startIcon={<Add sx={{ fontSize: '1rem !important' }} />} size="small" onClick={handleCreateFlashcard} disableElevation
           sx={{ borderRadius: 3, textTransform: 'uppercase', fontWeight: 900, fontSize: '0.75rem', px: 2, py: 0.7, color: t.text, borderColor: t.gray, borderWidth: 2, borderBottom: `4px solid ${t.grayDark}`, '&:hover': { bgcolor: t.surface }, '&:active': { borderBottomWidth: 0, transform: 'translateY(4px)' } }}>
           Thêm
@@ -437,6 +449,13 @@ const FolderDetailModal = ({
         open={previewOpen}
         onClose={() => setPreviewOpen(false)}
         cards={flashcards}
+      />
+
+      {/* ── Share Modal ───────────────────────────────────────────────────── */}
+      <ShareModal
+        open={shareOpen}
+        onClose={() => setShareOpen(false)}
+        folder={selectedFolder}
       />
 
       {/* ── Delete confirmation ───────────────────────────────────────────── */}

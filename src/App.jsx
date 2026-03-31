@@ -22,8 +22,11 @@ import AdminVideoPlayer from './pages/Admin/CourseManagement/AdminVideoPlayer.js
 import UserVideoPlayer from './pages/UserPage/MyCourse/UserVideoPlayer.jsx';
 import ChatbotIntro from './pages/GeneralPage/ChatbotIntro.jsx';
 import Chatbot from './pages/UserPage/Chatbot/Chatbot.jsx';
+import DiscoverPage from './pages/UserPage/Discover/DiscoverPage.jsx';
 import AdminLayout from './components/Layout/AdminLayout.jsx';
 import StudyPage from './pages/UserPage/Study/StudyPage.jsx';
+import ChallengePage from './pages/UserPage/Challenge/ChallengePage.jsx';
+import AdminExploreFolders from './pages/Admin/AdminExploreFolders.jsx';
 
 const ProtectedRoute = ({ user, allowedRoles }) => {
   if (!user) return <Navigate to="/login" replace={true} />;
@@ -78,8 +81,11 @@ function App() {
         <Route path={routes.FLASHCARD_DISCOVER} element={<Flashcard />} />
         <Route path={routes.FLASHCARD_FOLDERS} element={<Flashcard />} />
         <Route path={routes.FLASHCARD_SNAPLANG} element={<Flashcard />} />
+        <Route path={routes.FLASHCARD_EXPLORE} element={<Flashcard />} />
         <Route path={routes.CHATBOT} element={<Chatbot />} />
         <Route path={routes.STUDY} element={<StudyPage />} />
+        <Route path={routes.CHALLENGES} element={<ChallengePage />} />
+        <Route path={routes.DISCOVER} element={<DiscoverPage />} />
         <Route
           path="/my_course/:courseId/video"
           element={<UserVideoPlayer />}
@@ -114,6 +120,10 @@ function App() {
           <Route
             path={routes.ADMIN_BLOG_MANAGEMENT}
             element={<BlogManagement />}
+          />
+          <Route
+            path={routes.ADMIN_EXPLORE_FOLDERS}
+            element={<AdminExploreFolders />}
           />
           <Route
             path="/admin/courses/:courseId/video"

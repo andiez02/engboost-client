@@ -61,6 +61,12 @@ const initialState = {
   sessionStartTime: null, // UTC ISO string, set when queue is built
   reinsertCount: {},      // { [cardId]: number } — tracks reinsertions per card per session
   nextReviewAt: null,     // ISO timestamp of next upcoming card (when queue is empty)
+  
+  unlockedAchievements: [], // Achievements earned during this session
+  xpGained: 0,             // XP earned in this session
+  leveledUp: false,        // Whether user leveled up this session
+  newLevel: null,          // New level after level-up
+  completedChallenges: [], // Challenges completed this session
 };
 
 const studySlice = createSlice({
@@ -105,6 +111,11 @@ const studySlice = createSlice({
       state.sessionStartTime = null;
       state.reinsertCount = {};
       state.nextReviewAt = null;
+      state.unlockedAchievements = [];
+      state.xpGained = 0;
+      state.leveledUp = false;
+      state.newLevel = null;
+      state.completedChallenges = [];
     },
     /**
      * Reinsert a failed card back into the queue 2–4 positions ahead.
@@ -126,6 +137,25 @@ const studySlice = createSlice({
 
       state.queue.splice(insertAt, 0, card);
       state.reinsertCount[cardId] = (state.reinsertCount[cardId] ?? 0) + 1;
+    },
+    /**
+     * Clear a specific achievement from the queue after it has been displayed.
+     */
+    clearUnlockedAchievement: (state, action) => {
+      const achievementId = action.payload;
+      state.unlockedAchievements = state.unlockedAchievements.filter(
+        (ach) => ach.id !== achievementId
+      );
+    },
+    clearLevelUp: (state) => {
+      state.leveledUp = false;
+      state.newLevel = null;
+    },
+    clearCompletedChallenge: (state, action) => {
+      const challengeId = action.payload;
+      state.completedChallenges = state.completedChallenges.filter(
+        (c) => c.id !== challengeId
+      );
     },
   },
   extraReducers: (builder) => {
@@ -162,6 +192,25 @@ const studySlice = createSlice({
         state.isTransitioning = true; // advanceCard() will clear this after 300ms
         state.reviewedCount += 1;
         if (action.meta.arg.rating >= 2) state.correctCount += 1;
+        
+        // Handle achievements
+        if (action.payload.unlockedAchievements?.length > 0) {
+          state.unlockedAchievements.push(...action.payload.unlockedAchievements);
+        }
+        
+        // Handle XP & Level
+        if (action.payload.xpGained) {
+          state.xpGained += action.payload.xpGained;
+        }
+        if (action.payload.leveledUp) {
+          state.leveledUp = true;
+          state.newLevel = action.payload.newLevel;
+        }
+        
+        // Handle completed challenges
+        if (action.payload.completedChallenges?.length > 0) {
+          state.completedChallenges.push(...action.payload.completedChallenges);
+        }
       })
       .addCase(submitReview.rejected, (state, action) => {
         state.isSubmitting = false;
@@ -185,7 +234,7 @@ const studySlice = createSlice({
   },
 });
 
-export const { flipCard, resetFlip, resetSession, buildQueue, advanceCard, reinsertCard } = studySlice.actions;
+export const { flipCard, resetFlip, resetSession, buildQueue, advanceCard, reinsertCard, clearUnlockedAchievement, clearLevelUp, clearCompletedChallenge } = studySlice.actions;
 
 // ─── Selectors ───────────────────────────────────────────────────────────────
 

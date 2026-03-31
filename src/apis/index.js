@@ -10,6 +10,7 @@ import { flashcardService } from '../services/flashcard/flashcard.service';
 import { courseService } from '../services/course/course.service';
 import { chatbotService } from '../services/chatbot/chatbot.service';
 import { snaplangService } from '../services/snaplang/snaplang.service';
+import { postService } from '../services/post/post.service';
 
 // User Service exports
 export const registerUserAPI = userService.registerUser;
@@ -50,3 +51,10 @@ export const sendChatMessageAPI = chatbotService.sendChatMessage;
 
 // Snaplang Service exports
 export const snaplangDetectAPI = snaplangService.snaplangDetect;
+
+// Post Service exports
+export const getPostsAPI = postService.getPosts;
+export const likePostAPI = postService.likePost;
+export const unlikePostAPI = postService.unlikePost;
+export const savePostAPI = postService.savePost;
+export const createPostAPI = postService.createPost;

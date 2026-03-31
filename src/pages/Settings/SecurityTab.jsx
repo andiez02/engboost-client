@@ -1,41 +1,33 @@
-import React from 'react';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import TextField from '@mui/material/TextField';
-import InputAdornment from '@mui/material/InputAdornment';
-import Button from '@mui/material/Button';
+import { useState } from 'react';
+import { Box, Typography, TextField, InputAdornment, Button, Dialog, DialogTitle, DialogContent, DialogActions, Avatar } from '@mui/material';
 import PasswordIcon from '@mui/icons-material/Password';
 import LockResetIcon from '@mui/icons-material/LockReset';
 import LockIcon from '@mui/icons-material/Lock';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import Avatar from '@mui/material/Avatar';
+import ShieldIcon from '@mui/icons-material/Shield';
 import { alpha } from '@mui/material/styles';
-
 import { useForm } from 'react-hook-form';
-import {
-  FIELD_REQUIRED_MESSAGE,
-  PASSWORD_RULE,
-  PASSWORD_RULE_MESSAGE,
-} from '../../utils/validator';
+import { FIELD_REQUIRED_MESSAGE, PASSWORD_RULE, PASSWORD_RULE_MESSAGE } from '../../utils/validator';
 import FieldErrorAlert from '../../components/Form/FieldErrorAlert';
 import { useDispatch } from 'react-redux';
 import { logoutUserAPI, updateUserAPI } from '../../redux/user/userSlice';
 import { toast } from 'react-toastify';
+import { gamify, btn3d } from '../../theme';
 
-function SecurityTab() {
+const inputSx = {
+  '& .MuiOutlinedInput-root': {
+    borderRadius: '12px',
+    '& fieldset': { borderColor: gamify.gray, borderWidth: 2 },
+    '&:hover fieldset': { borderColor: gamify.blue },
+    '&.Mui-focused fieldset': { borderColor: gamify.blue },
+  },
+};
+
+export default function SecurityTab() {
   const dispatch = useDispatch();
-  const [confirmDialogOpen, setConfirmDialogOpen] = React.useState(false);
-  const [formData, setFormData] = React.useState(null);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [formData, setFormData] = useState(null);
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    formState: { errors },
-  } = useForm();
+  const { register, handleSubmit, watch, formState: { errors } } = useForm();
 
   const handleChangePassword = (data) => {
     setFormData(data);
@@ -44,10 +36,7 @@ function SecurityTab() {
 
   const handleConfirmChangePassword = () => {
     const { current_password, new_password } = formData;
-    toast
-      .promise(dispatch(updateUserAPI({ current_password, new_password })), {
-        pending: 'Đang cập nhật...',
-      })
+    toast.promise(dispatch(updateUserAPI({ current_password, new_password })), { pending: 'Đang cập nhật...' })
       .then((res) => {
         if (!res.error) {
           toast.success('Đổi mật khẩu thành công! Vui lòng đăng nhập lại.');
@@ -57,205 +46,153 @@ function SecurityTab() {
       });
   };
 
-  const handleCancelChangePassword = () => {
-    setConfirmDialogOpen(false);
-    setFormData(null);
-  };
-
   return (
-    <Box
-      sx={{
-        width: '100%',
-        height: '100%',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      <Box
-        sx={{
-          maxWidth: '1200px',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 3,
-        }}
-      >
-        <Box>
-          <Typography variant="h5">Security Dashboard</Typography>
-        </Box>
-        <form onSubmit={handleSubmit(handleChangePassword)}>
-          <Box
-            sx={{
-              width: '400px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 2,
-            }}
+    <div className="flex flex-col lg:flex-row gap-10">
+      {/* Left: Info panel */}
+      <div className="lg:w-56 shrink-0">
+        <div
+          className="flex flex-col items-center gap-3 p-6 rounded-2xl text-center"
+          style={{ backgroundColor: gamify.surface, border: `2px solid ${gamify.gray}` }}
+        >
+          <div
+            className="flex items-center justify-center w-16 h-16 rounded-2xl"
+            style={{ backgroundColor: alpha(gamify.blue, 0.1) }}
           >
+            <ShieldIcon sx={{ fontSize: 32, color: gamify.blue }} />
+          </div>
+          <Typography sx={{ fontWeight: 900, color: gamify.text, fontSize: '0.95rem' }}>
+            Password
+          </Typography>
+          <Typography sx={{ color: gamify.sub, fontSize: '0.8rem', fontWeight: 600, lineHeight: 1.5 }}>
+            Use a strong password to keep your account secure
+          </Typography>
+        </div>
+      </div>
+
+      {/* Right: Form */}
+      <div className="flex-1">
+        <Typography
+          sx={{ fontWeight: 900, fontSize: '1.1rem', color: gamify.text, mb: 0.5, letterSpacing: '-0.01em' }}
+        >
+          Change Password
+        </Typography>
+        <Typography sx={{ color: gamify.sub, fontWeight: 600, fontSize: '0.85rem', mb: 4 }}>
+          After changing, you'll be logged out and need to sign in again
+        </Typography>
+
+        <form onSubmit={handleSubmit(handleChangePassword)}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, maxWidth: 480 }}>
             <Box>
+              <Typography sx={{ fontWeight: 800, fontSize: '0.8rem', color: gamify.sub, letterSpacing: '0.05em', mb: 1 }}>
+                CURRENT PASSWORD
+              </Typography>
               <TextField
-                fullWidth
-                label="Current Password"
-                type="password"
-                variant="outlined"
+                fullWidth size="small" type="password" variant="outlined"
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <PasswordIcon fontSize="small" />
+                      <PasswordIcon fontSize="small" sx={{ color: gamify.sub }} />
                     </InputAdornment>
                   ),
                 }}
+                sx={inputSx}
                 {...register('current_password', {
                   required: FIELD_REQUIRED_MESSAGE,
-                  pattern: {
-                    value: PASSWORD_RULE,
-                    message: PASSWORD_RULE_MESSAGE,
-                  },
+                  pattern: { value: PASSWORD_RULE, message: PASSWORD_RULE_MESSAGE },
                 })}
                 error={!!errors['current_password']}
               />
-              <FieldErrorAlert errors={errors} fieldName={'current_password'} />
+              <FieldErrorAlert errors={errors} fieldName="current_password" />
             </Box>
 
             <Box>
+              <Typography sx={{ fontWeight: 800, fontSize: '0.8rem', color: gamify.sub, letterSpacing: '0.05em', mb: 1 }}>
+                NEW PASSWORD
+              </Typography>
               <TextField
-                fullWidth
-                label="New Password"
-                type="password"
-                variant="outlined"
+                fullWidth size="small" type="password" variant="outlined"
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <LockIcon fontSize="small" />
+                      <LockIcon fontSize="small" sx={{ color: gamify.blue }} />
                     </InputAdornment>
                   ),
                 }}
+                sx={inputSx}
                 {...register('new_password', {
                   required: FIELD_REQUIRED_MESSAGE,
-                  pattern: {
-                    value: PASSWORD_RULE,
-                    message: PASSWORD_RULE_MESSAGE,
-                  },
+                  pattern: { value: PASSWORD_RULE, message: PASSWORD_RULE_MESSAGE },
                 })}
                 error={!!errors['new_password']}
               />
-              <FieldErrorAlert errors={errors} fieldName={'new_password'} />
+              <FieldErrorAlert errors={errors} fieldName="new_password" />
             </Box>
 
             <Box>
+              <Typography sx={{ fontWeight: 800, fontSize: '0.8rem', color: gamify.sub, letterSpacing: '0.05em', mb: 1 }}>
+                CONFIRM NEW PASSWORD
+              </Typography>
               <TextField
-                fullWidth
-                label="New Password Confirmation"
-                type="password"
-                variant="outlined"
+                fullWidth size="small" type="password" variant="outlined"
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <LockResetIcon fontSize="small" />
+                      <LockResetIcon fontSize="small" sx={{ color: gamify.blue }} />
                     </InputAdornment>
                   ),
                 }}
+                sx={inputSx}
                 {...register('new_password_confirmation', {
-                  validate: (value) => {
-                    if (value === watch('new_password')) return true;
-                    return 'Password confirmation does not match.';
-                  },
+                  validate: (value) =>
+                    value === watch('new_password') || 'Password confirmation does not match.',
                 })}
                 error={!!errors['new_password_confirmation']}
               />
-              <FieldErrorAlert
-                errors={errors}
-                fieldName={'new_password_confirmation'}
-              />
+              <FieldErrorAlert errors={errors} fieldName="new_password_confirmation" />
             </Box>
 
-            <Box>
-              <Button
-                className="interceptor-loading"
-                type="submit"
-                variant="contained"
-                color="primary"
-                fullWidth
-              >
-                Change
-              </Button>
-            </Box>
+            <Button
+              className="interceptor-loading"
+              type="submit"
+              variant="contained"
+              sx={{ ...btn3d(gamify.blue, gamify.blueDark), alignSelf: 'flex-start', px: 4, py: 1.2 }}
+            >
+              Update Password
+            </Button>
           </Box>
         </form>
-      </Box>
+      </div>
 
+      {/* Confirm dialog */}
       <Dialog
         open={confirmDialogOpen}
-        onClose={handleCancelChangePassword}
-        aria-labelledby="change-password-dialog-title"
-        aria-describedby="change-password-dialog-description"
+        onClose={() => setConfirmDialogOpen(false)}
         PaperProps={{
-          sx: {
-            borderRadius: '20px',
-            overflow: 'hidden',
-            boxShadow: '0 20px 50px rgba(0,0,0,0.15)',
-          },
+          sx: { borderRadius: '20px', overflow: 'hidden', boxShadow: '0 20px 50px rgba(0,0,0,0.15)' },
         }}
       >
-        <DialogTitle
-          id="change-password-dialog-title"
-          sx={{
-            p: 3,
-            pb: 2,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 2,
-          }}
-        >
-          <Avatar
-            sx={{
-              bgcolor: alpha('#3B82F6', 0.1),
-              color: '#3B82F6',
-              width: 42,
-              height: 42,
-            }}
-          >
+        <DialogTitle sx={{ p: 3, pb: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Avatar sx={{ bgcolor: alpha(gamify.blue, 0.1), color: gamify.blue, width: 42, height: 42 }}>
             <LockResetIcon />
           </Avatar>
           <Box>
-            <Typography variant="h6" fontWeight={600}>
-              Đổi mật khẩu
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Bạn có chắc chắn muốn đổi mật khẩu?
-            </Typography>
+            <Typography variant="h6" fontWeight={900}>Đổi mật khẩu</Typography>
+            <Typography variant="body2" color="text.secondary">Bạn có chắc chắn muốn đổi mật khẩu?</Typography>
           </Box>
         </DialogTitle>
         <DialogContent sx={{ p: 3, pt: 0 }}>
           <Typography variant="body2" color="text.secondary">
-            Sau khi đổi mật khẩu, bạn sẽ cần đăng nhập lại để tiếp tục sử dụng
-            các tính năng của ứng dụng.
+            Sau khi đổi mật khẩu, bạn sẽ cần đăng nhập lại để tiếp tục sử dụng các tính năng của ứng dụng.
           </Typography>
         </DialogContent>
-        <DialogActions
-          sx={{
-            px: 3,
-            pb: 3,
-            pt: 1,
-          }}
-        >
+        <DialogActions sx={{ px: 3, pb: 3, pt: 1, gap: 1 }}>
           <Button
-            onClick={handleCancelChangePassword}
+            onClick={() => setConfirmDialogOpen(false)}
             variant="outlined"
             sx={{
-              borderRadius: '12px',
-              textTransform: 'none',
-              fontWeight: 500,
-              borderColor: '#E5E7EB',
-              color: '#6B7280',
-              '&:hover': {
-                borderColor: '#D1D5DB',
-                backgroundColor: '#F9FAFB',
-              },
-              px: 2,
-              py: 1,
+              borderRadius: '12px', textTransform: 'none', fontWeight: 700,
+              borderColor: gamify.gray, color: gamify.sub, borderWidth: 2,
+              '&:hover': { borderColor: gamify.grayDark, backgroundColor: gamify.surface, borderWidth: 2 },
             }}
           >
             Huỷ
@@ -265,24 +202,15 @@ function SecurityTab() {
             variant="contained"
             className="interceptor-loading"
             sx={{
-              borderRadius: '12px',
+              ...btn3d(gamify.blue, gamify.blueDark),
               textTransform: 'none',
-              fontWeight: 500,
-              backgroundColor: '#3B82F6',
-              boxShadow: `0 4px 12px ${alpha('#3B82F6', 0.3)}`,
-              '&:hover': {
-                backgroundColor: '#2563EB',
-              },
-              px: 2,
-              py: 1,
+              borderRadius: '12px',
             }}
           >
             Đồng ý
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </div>
   );
 }
-
-export default SecurityTab;

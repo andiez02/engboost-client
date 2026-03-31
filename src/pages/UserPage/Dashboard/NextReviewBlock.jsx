@@ -1,18 +1,34 @@
 import { useEffect, useState } from 'react';
 import { Box, Typography } from '@mui/material';
+import { useDispatch } from 'react-redux';
 import { formatTimeRemaining } from '../../../utils/formatTimeRemaining';
+import { fetchStats } from '../../../redux/study/studySlice';
 
 export default function NextReviewBlock({ nextReviewAt }) {
+  const dispatch = useDispatch();
   const [timeDisplay, setTimeDisplay] = useState(() => formatTimeRemaining(nextReviewAt));
 
   useEffect(() => {
     if (!nextReviewAt) return;
     setTimeDisplay(formatTimeRemaining(nextReviewAt));
+    
+    let hasFetched = false;
+
     const id = setInterval(() => {
-      setTimeDisplay(formatTimeRemaining(nextReviewAt));
+      const diff = new Date(nextReviewAt).getTime() - Date.now();
+      
+      if (diff <= 0 && !hasFetched) {
+        hasFetched = true;
+        dispatch(fetchStats());
+        setTimeDisplay('ngay bây giờ');
+        clearInterval(id);
+      } else if (diff > 0) {
+        setTimeDisplay(formatTimeRemaining(nextReviewAt));
+      }
     }, 1000);
+
     return () => clearInterval(id);
-  }, [nextReviewAt]);
+  }, [nextReviewAt, dispatch]);
 
   if (!nextReviewAt) return null;
 

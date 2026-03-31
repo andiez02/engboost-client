@@ -6,10 +6,10 @@ import { flipCard, resetSession } from '../../../redux/study/studySlice';
 import { useStudySession } from './useStudySession';
 import FlashcardView from './FlashcardView';
 import RatingButtons from './RatingButtons';
-import StudyComplete from './StudyComplete';
 import EmptyStudy from './EmptyStudy';
 import StudyHeader from './StudyHeader';
 import LeaveSessionDialog from './LeaveSessionDialog';
+import SessionFeedbackModal from '../Flashcard/SessionFeedbackModal';
 
 export default function StudyPage() {
   const dispatch = useDispatch();
@@ -20,8 +20,6 @@ export default function StudyPage() {
 
   const {
     currentCard,
-    currentIndex,
-    total,
     isCompleted,
     isFlipped,
     isLoading,
@@ -37,6 +35,8 @@ export default function StudyPage() {
     nextReviewAt,
     handleAnswer,
   } = useStudySession(folderId);
+  const stats = useSelector((state) => state.study.stats);
+  const xpGained = useSelector((state) => state.study.xpGained);
 
   // ── Keyboard shortcuts ───────────────────────────────────────────────────
   const handleRate = useCallback(
@@ -89,24 +89,9 @@ export default function StudyPage() {
   }
 
   /* ── session complete ── */
-  if (isCompleted) {
-    if (queueLength === 0) {
-      return <EmptyStudy variant="no-cards" nextReviewAt={nextReviewAt} reviewedToday={reviewedToday} folderId={folderId} />;
-    }
-    return (
-      <Fade in timeout={400}>
-        <div>
-          <StudyComplete
-            reviewed={reviewed}
-            correct={correct}
-            dueCount={dueCount}
-            folderId={folderId}
-            sessionDuration={sessionDuration}
-            onReview={handleReview}
-          />
-        </div>
-      </Fade>
-    );
+  // If no cards were ever loaded
+  if (isCompleted && queueLength === 0) {
+    return <EmptyStudy variant="no-cards" nextReviewAt={nextReviewAt} reviewedToday={reviewedToday} folderId={folderId} />;
   }
 
   /* ── empty states ── */
@@ -173,6 +158,18 @@ export default function StudyPage() {
         onCancel={() => setLeaveDialogOpen(false)}
         onConfirm={() => { dispatch(resetSession()); navigate('/dashboard'); }}
       />
+      
+      {/* Session Feedback Modal */}
+      {isCompleted && queueLength > 0 && (
+        <SessionFeedbackModal
+          reviewedCount={reviewed}
+          correctCount={correct}
+          sessionDuration={sessionDuration}
+          streak={stats?.streak ?? 0}
+          xpGained={xpGained}
+          onClose={handleReview}
+        />
+      )}
     </>
   );
 }

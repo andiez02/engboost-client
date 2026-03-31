@@ -1,5 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import { useDispatch } from 'react-redux';
 import { Box, Skeleton, Typography } from '@mui/material';
+import { fetchStats } from '../../../redux/study/studySlice';
+import StreakAndGoalCard from './StreakAndGoalCard';
 
 function formatLiveCountdown(nextReviewAt) {
   if (!nextReviewAt) return null;
@@ -18,8 +21,44 @@ function formatLiveCountdown(nextReviewAt) {
   return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
 }
 
-export default function ProgressInline({ reviewedToday, nextReviewAt, due, isLoading }) {
+export default function ProgressInline({ reviewedToday, nextReviewAt, due, streak = 0, dailyGoal = 20, isLoading }) {
+  const dispatch = useDispatch();
   const [timeDisplay, setTimeDisplay] = useState(() => formatLiveCountdown(nextReviewAt));
+  
+  const [animPhase, setAnimPhase] = useState(2);
+  const [leftNum, setLeftNum] = useState(0);
+  const [rightNum, setRightNum] = useState(0);
+  const prevDueRef = useRef(0);
+  const isFirstRender = useRef(true);
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    if (isFirstRender.current) {
+      // First time we get data (after loading), just show the total
+      isFirstRender.current = false;
+      setAnimPhase(2);
+      prevDueRef.current = due;
+      return;
+    }
+    // Subsequent updates
+    if (due > prevDueRef.current && prevDueRef.current > 0) {
+      // Cards added (e.g. 10 + 2)
+      const added = due - prevDueRef.current;
+      setLeftNum(prevDueRef.current);
+      setRightNum(added);
+      setAnimPhase(0);
+
+      const timer = setTimeout(() => setAnimPhase(1), 1000);
+      
+      prevDueRef.current = due;
+      return () => clearTimeout(timer);
+    } else if (due < prevDueRef.current) {
+      // Cards studied, quietly update total without re-running the animation
+      setAnimPhase(2);
+      prevDueRef.current = due;
+    }
+  }, [due, isLoading]);
 
   useEffect(() => {
     if (!nextReviewAt) {
@@ -28,13 +67,22 @@ export default function ProgressInline({ reviewedToday, nextReviewAt, due, isLoa
     }
 
     setTimeDisplay(formatLiveCountdown(nextReviewAt));
+    let hasFetched = false;
 
     const intervalId = setInterval(() => {
-      setTimeDisplay(formatLiveCountdown(nextReviewAt));
+      const diff = new Date(nextReviewAt).getTime() - Date.now();
+      if (diff <= 0 && !hasFetched) {
+        hasFetched = true;
+        setTimeDisplay('SẴN SÀNG');
+        dispatch(fetchStats());
+        clearInterval(intervalId);
+      } else if (diff > 0) {
+        setTimeDisplay(formatLiveCountdown(nextReviewAt));
+      }
     }, 1000);
 
     return () => clearInterval(intervalId);
-  }, [nextReviewAt]);
+  }, [nextReviewAt, dispatch]);
 
   if (isLoading) {
     return (
@@ -46,114 +94,50 @@ export default function ProgressInline({ reviewedToday, nextReviewAt, due, isLoa
     );
   }
 
-  // Tiêu chuẩn/Mục tiêu hằng ngày
-  const DAILY_GOAL = 50; 
-  const progressPercent = Math.min((reviewedToday / DAILY_GOAL) * 100, 100);
-
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-      {/* 1. Lửa Học Tập (Daily Progress) */}
-      <Box
-        sx={{
-          bgcolor: '#fff',
-          borderRadius: 4,
-          p: 2.5,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 1.5,
-          border: '2px solid #E5E5E5',
-          borderBottom: '4px solid #E5E5E5',
-        }}
-      >
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Box
-              sx={{
-                fontSize: '1.5rem',
-                animation: reviewedToday > 0 ? 'pulse 2s infinite ease-in-out' : 'none',
-                '@keyframes pulse': {
-                  '0%, 100%': { transform: 'scale(1)' },
-                  '50%': { transform: 'scale(1.15)' },
-                },
-              }}
-            >
-              🔥
-            </Box>
-            <Typography fontWeight={900} fontSize="0.9rem" color="#FF9600" sx={{ letterSpacing: '0.02em' }}>
-              NHIỆT HUYẾT
-            </Typography>
-          </Box>
-          <Typography fontWeight={900} fontSize="1.1rem" color={reviewedToday >= DAILY_GOAL ? '#FF9600' : '#AFAFAF'}>
-            {reviewedToday} / {DAILY_GOAL}
-          </Typography>
-        </Box>
-        <Box sx={{ width: '100%', height: 14, bgcolor: '#F0F0F0', borderRadius: 6, overflow: 'hidden' }}>
-          <Box
-            sx={{
-              width: `${progressPercent}%`,
-              height: '100%',
-              bgcolor: '#FF9600',
-              borderRadius: 6,
-              transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)',
-              position: 'relative',
-              '&::after': {
-                content: '""',
-                position: 'absolute',
-                top: 0, left: 0, right: 0, bottom: 0,
-                background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)',
-                animation: 'shimmer 2s infinite',
-              },
-              '@keyframes shimmer': {
-                '0%': { transform: 'translateX(-100%)' },
-                '100%': { transform: 'translateX(100%)' },
-              }
-            }}
-          />
-        </Box>
-        <Typography fontWeight={700} fontSize="0.75rem" color="#AFAFAF" sx={{ textAlign: 'center' }}>
-          {reviewedToday >= DAILY_GOAL 
-            ? 'Tuyệt vời! Bạn đã đạt chỉ tiêu ngày.' 
-            : `Cố lên! Còn ${DAILY_GOAL - reviewedToday} thẻ để đạt chỉ tiêu.`}
-        </Typography>
-      </Box>
+      {/* 1. Lửa Học Tập (Streak & Goal) */}
+      <StreakAndGoalCard streak={streak} reviewedToday={reviewedToday} dailyGoal={dailyGoal} />
 
       {/* 2. Đếm ngược thời gian (Next Review Countdown) */}
-      <Box
-        sx={{
-          bgcolor: timeDisplay === 'SẴN SÀNG' ? '#58CC02' : '#1CB0F6',
-          borderRadius: 4,
-          p: 2.5,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 1.5,
-          borderBottom: `4px solid ${timeDisplay === 'SẴN SÀNG' ? '#46A302' : '#1899D6'}`,
-          color: '#fff',
-          transition: 'all 0.3s ease',
-        }}
-      >
-        <Typography fontWeight={800} fontSize="0.8rem" sx={{ opacity: 0.9, letterSpacing: '0.05em' }}>
-          {timeDisplay === 'SẴN SÀNG' ? 'ĐÃ ĐẾN GIỜ HỌC' : 'SẴN SÀNG TRONG'}
-        </Typography>
+      {due === 0 && nextReviewAt && (
         <Box
           sx={{
-            bgcolor: 'rgba(0,0,0,0.15)',
-            px: 3,
-            py: 1.5,
-            borderRadius: 3,
-            width: '100%',
-            textAlign: 'center',
-            fontFamily: 'monospace',
-            fontSize: '1.8rem',
-            fontWeight: 900,
-            letterSpacing: '0.1em',
-            boxShadow: 'inset 0 4px 8px rgba(0,0,0,0.1)',
-            textShadow: '0 2px 4px rgba(0,0,0,0.2)',
+            bgcolor: timeDisplay === 'SẴN SÀNG' ? '#58CC02' : '#1CB0F6',
+            borderRadius: 4,
+            p: 2.5,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 1.5,
+            borderBottom: `4px solid ${timeDisplay === 'SẴN SÀNG' ? '#46A302' : '#1899D6'}`,
+            color: '#fff',
+            transition: 'all 0.3s ease',
           }}
         >
-          {timeDisplay || '--:--:--'}
+          <Typography fontWeight={800} fontSize="0.8rem" sx={{ opacity: 0.9, letterSpacing: '0.05em' }}>
+            {timeDisplay === 'SẴN SÀNG' ? 'ĐÃ ĐẾN GIỜ HỌC' : 'SẴN SÀNG TRONG'}
+          </Typography>
+          <Box
+            sx={{
+              bgcolor: 'rgba(0,0,0,0.15)',
+              px: 3,
+              py: 1.5,
+              borderRadius: 3,
+              width: '100%',
+              textAlign: 'center',
+              fontFamily: 'monospace',
+              fontSize: '1.8rem',
+              fontWeight: 900,
+              letterSpacing: '0.1em',
+              boxShadow: 'inset 0 4px 8px rgba(0,0,0,0.1)',
+              textShadow: '0 2px 4px rgba(0,0,0,0.2)',
+            }}
+          >
+            {timeDisplay || '--:--:--'}
+          </Box>
         </Box>
-      </Box>
+      )}
 
       {/* 3. Thẻ chờ ôn (Due Cards) */}
       <Box
@@ -185,13 +169,58 @@ export default function ProgressInline({ reviewedToday, nextReviewAt, due, isLoa
         <Box sx={{ fontSize: '2.5rem', filter: due > 0 ? 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))' : 'none' }}>
           {due > 0 ? '🎯' : '🎉'}
         </Box>
-        <Box sx={{ zIndex: 1 }}>
-          <Typography fontWeight={900} fontSize="1.8rem" sx={{ lineHeight: 1, color: due > 0 ? '#fff' : '#58CC02' }}>
-            {due > 0 ? due : '0'}
-          </Typography>
-          <Typography fontWeight={800} fontSize="0.8rem" sx={{ mt: 0.5, opacity: 0.9 }}>
-            {due > 0 ? 'THẺ ĐANG CHỜ BẠN' : 'BẠN ĐÃ HOÀN TẤT!'}
-          </Typography>
+        <Box sx={{ zIndex: 1, position: 'relative', minHeight: 64, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          {due === 0 ? (
+            <Box>
+              <Typography fontWeight={900} fontSize="1.8rem" sx={{ lineHeight: 1, color: '#58CC02' }}>
+                0
+              </Typography>
+              <Typography fontWeight={800} fontSize="0.8rem" sx={{ mt: 0.5, opacity: 0.9 }}>
+                BẠN ĐÃ HOÀN TẤT!
+              </Typography>
+            </Box>
+          ) : animPhase === 0 ? (
+            <Box
+              sx={{
+                animation: 'slideInRight 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, mergeOut 0.3s ease-in 0.7s forwards',
+                '@keyframes slideInRight': {
+                  '0%': { opacity: 0, transform: 'translateX(20px)' },
+                  '100%': { opacity: 1, transform: 'translateX(0)' }
+                },
+                '@keyframes mergeOut': {
+                  '0%': { opacity: 1, transform: 'scale(1)' },
+                  '100%': { opacity: 0, transform: 'scale(0.5)' }
+                }
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                 <Typography fontWeight={900} fontSize="1.8rem" sx={{ lineHeight: 1, color: '#fff' }}>
+                    {leftNum}
+                 </Typography>
+                 <Typography fontWeight={900} fontSize="1.8rem" sx={{ color: '#fff', opacity: 0.6 }}>+</Typography>
+                 <Typography fontWeight={900} fontSize="1.8rem" sx={{ lineHeight: 1, color: '#fff' }}>
+                    {rightNum}
+                 </Typography>
+              </Box>
+            </Box>
+          ) : (
+            <Box
+              sx={{
+                animation: animPhase === 1 ? 'popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards' : 'none',
+                '@keyframes popIn': {
+                  '0%': { opacity: 0, transform: 'scale(0.5)' },
+                  '100%': { opacity: 1, transform: 'scale(1)' }
+                }
+              }}
+            >
+              <Typography fontWeight={900} fontSize="1.8rem" sx={{ lineHeight: 1, color: '#fff' }}>
+                {due}
+              </Typography>
+              <Typography fontWeight={800} fontSize="0.8rem" sx={{ mt: 0.5, opacity: 0.9 }}>
+                THẺ ĐANG CHỜ BẠN
+              </Typography>
+            </Box>
+          )}
         </Box>
       </Box>
 

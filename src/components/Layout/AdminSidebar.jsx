@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Typography } from '@mui/material';
 import { routes } from '../../utils/constants.js';
-import { Users, BookOpen, BookmarkIcon, FileText, Home } from 'lucide-react';
+import { Users, BookOpen, BookmarkIcon, FileText, Home, Unlock } from 'lucide-react';
 
 const AdminSidebar = ({ isOpen }) => {
   const navigate = useNavigate();
@@ -33,6 +33,11 @@ const AdminSidebar = ({ isOpen }) => {
       title: 'Quản lý blog',
       icon: <FileText size={20} />,
       path: routes.ADMIN_BLOG_MANAGEMENT,
+    },
+    {
+      title: 'Explore Folders',
+      icon: <Unlock size={20} />,
+      path: routes.ADMIN_EXPLORE_FOLDERS,
     },
   ];
 

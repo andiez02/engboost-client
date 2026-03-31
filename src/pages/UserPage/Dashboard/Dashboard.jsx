@@ -10,9 +10,18 @@ import ProgressInline from './ProgressInline';
 import LearningFlow from './LearningFlow';
 import SuggestionCard from './SuggestionCard';
 import FolderGrid from './FolderGrid';
+import ChallengeCard from './ChallengeCard';
 
 function Dashboard() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
+    const saved = localStorage.getItem('sidebarOpen');
+    return saved !== null ? saved === 'true' : true;
+  });
+
+  const handleSidebarToggle = (val) => {
+    setIsSidebarOpen(val);
+    localStorage.setItem('sidebarOpen', String(val));
+  };
   const dispatch = useDispatch();
   const currentUser = useSelector(selectCurrentUser);
 
@@ -37,12 +46,17 @@ function Dashboard() {
 
   const handleRetry = () => dispatch(fetchStats());
   const due = stats?.due ?? 0;
+  const overdueCount = stats?.overdueCount ?? 0;
+  const dueTodayCount = stats?.dueTodayCount ?? 0;
   const reviewedToday = stats?.reviewedToday ?? 0;
+  const streak = stats?.streak ?? 0;
+  const dailyGoal = stats?.dailyGoal ?? 20;
+  const challenges = stats?.challenges ?? [];
   const userName = currentUser?.user?.username;
 
   return (
     <div className="flex min-h-screen bg-slate-50">
-      <Sidebar isOpen={isSidebarOpen} />
+      <Sidebar isOpen={isSidebarOpen} setIsOpen={handleSidebarToggle} />
 
       <div
         className={`flex-1 transition-all duration-300 ${
@@ -51,7 +65,7 @@ function Dashboard() {
       >
         <HeaderUser
           isSidebarOpen={isSidebarOpen}
-          setIsSidebarOpen={setIsSidebarOpen}
+          setIsSidebarOpen={handleSidebarToggle}
         />
 
         <div className="min-h-screen mt-[60px] pb-10">
@@ -79,6 +93,11 @@ function Dashboard() {
                 reviewedToday={reviewedToday}
                 nextReviewAt={nextReviewAt}
                 due={due}
+                overdueCount={overdueCount}
+                dueTodayCount={dueTodayCount}
+                streak={streak}
+                dailyGoal={dailyGoal}
+                challenges={challenges}
                 isLoading={isLoading}
               />
 

@@ -147,7 +147,7 @@ export default function LearningFlow({ due, reviewedToday }) {
                 }}
               >
                 <Typography sx={{ 
-                  color: isPassed ? '#58CC02' : '#fff', 
+                  color: '#fff', 
                   fontFamily: 'monospace', 
                   fontSize: '2.5rem', 
                   fontWeight: 900, 

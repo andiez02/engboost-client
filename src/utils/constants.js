@@ -22,6 +22,8 @@ export const routes = {
   FLASHCARD: '/flashcard',
   //Dashboard
   MY_COURSE: '/my_course',
+  //Challenges
+  CHALLENGES: '/challenges',
   //Setting Account
   SETTINGS_ACCOUNT: '/settings/account',
   //Setting Security
@@ -32,6 +34,10 @@ export const routes = {
   FLASHCARD_FOLDERS: '/flashcard/folders',
   //Flashcard Snaplang
   FLASHCARD_SNAPLANG: '/flashcard/snaplang',
+  // Discover
+  DISCOVER: '/discover',
+  // Flashcard Explore
+  FLASHCARD_EXPLORE: '/flashcard/explore',
 
   // Courses
   COURSES: '/courses',
@@ -51,6 +57,8 @@ export const routes = {
   ADMIN_BLOG_MANAGEMENT: '/admin/blog_management',
   //Admin Flashcard Management
   ADMIN_FLASHCARD_MANAGEMENT: '/admin/flashcard_management',
+  //Admin Explore Folders
+  ADMIN_EXPLORE_FOLDERS: '/admin/explore_folders',
   //Admin User Management
   ADMIN_USER_MANAGEMENT: '/admin/user_management',
 };

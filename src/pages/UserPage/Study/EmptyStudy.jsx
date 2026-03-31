@@ -8,23 +8,23 @@ import { formatTimeRemaining } from '../../../utils/formatTimeRemaining';
 const VARIANTS = {
   'no-cards': {
     emoji: '📭',
-    title: 'No cards to review yet',
-    subtitle: 'Create your first deck to start learning.',
-    cta: 'Create your first deck',
+    title: 'Chưa có thẻ nào',
+    subtitle: 'Hãy tạo bộ thẻ đầu tiên của bạn để bắt đầu học.',
+    cta: 'Tạo thẻ mới',
     path: '/flashcard/folders',
   },
   'caught-up': {
-    emoji: '✅',
-    title: "You're all caught up!",
-    subtitle: "Nothing due today. Add more cards to keep the momentum going.",
-    cta: 'Add more cards',
+    emoji: '🎉',
+    title: 'Tuyệt vời!',
+    subtitle: 'Bạn đã hoàn thành mục tiêu hôm nay. Hãy tiếp tục khám phá hoặc ôn tập thêm để giữ vững phong độ nhé!',
+    cta: 'Duyệt thêm thẻ mới',
     path: '/flashcard/folders',
   },
   'folder-empty': {
     emoji: '📂',
-    title: 'No due cards in this folder',
-    subtitle: 'All cards here are up to date. Try studying all due cards instead.',
-    cta: 'Study all due cards',
+    title: 'Thư mục hoàn tất',
+    subtitle: 'Thư mục này hiện không có thẻ nào cần ôn. Hãy thử ôn tập toàn bộ thẻ đến hạn.',
+    cta: 'Ôn tập tất cả',
     path: '/study',
   },
 };
@@ -58,165 +58,147 @@ export default function EmptyStudy({ variant = 'no-cards', folderName, nextRevie
   return (
     <Box sx={{
       minHeight: '100vh',
-      background: 'linear-gradient(160deg, #f0f0ff 0%, #f8f8ff 50%, #f0f7ff 100%)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       px: 2,
     }}>
       <Box sx={{
+        bgcolor: '#fff',
         width: '100%',
         maxWidth: 400,
-        bgcolor: '#fff',
-        borderRadius: 5,
-        boxShadow: '0 8px 48px rgba(79,70,229,0.12)',
-        border: '1.5px solid rgba(79,70,229,0.08)',
-        p: { xs: 3, sm: 5 },
+        borderRadius: 6,
+        border: '2px solid #E5E5E5',
+        borderBottom: '6px solid #E5E5E5',
+        p: 4,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: 2.5,
         textAlign: 'center',
       }}>
 
         {/* emoji badge */}
-        <Box sx={{
-          width: 72, height: 72, borderRadius: '50%',
-          background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 8px 24px rgba(79,70,229,0.3)',
-          fontSize: 32,
-        }}>
+        <Box sx={{ fontSize: '4rem', mb: 1, animation: 'bounce 2s infinite ease-in-out' }}>
           {config.emoji}
         </Box>
 
-        <Box>
-          <Typography variant="h6" fontWeight={800} sx={{ letterSpacing: '-0.2px' }}>
-            {config.title}
-          </Typography>
-          <Typography color="text.secondary" fontSize="0.9rem" sx={{ mt: 0.75, lineHeight: 1.6 }}>
-            {folderName ? `"${folderName}" — ${config.subtitle}` : config.subtitle}
-          </Typography>
-        </Box>
+        <Typography fontWeight={900} fontSize="1.6rem" color="#4B4B4B" sx={{ mb: 1, letterSpacing: '-0.02em' }}>
+          {config.title}
+        </Typography>
+        <Typography fontWeight={700} fontSize="1rem" color="#AFAFAF" sx={{ mb: 3 }}>
+          {folderName ? `"${folderName}" — ${config.subtitle}` : config.subtitle}
+        </Typography>
 
         {/* Next review time + reviewed today stats */}
         {variant === 'caught-up' && (
-          <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+          <Box sx={{ width: '100%', bgcolor: '#FAFAFA', borderRadius: 4, p: 2, display: 'flex', gap: 2, border: '2px solid #E5E5E5', mb: 3 }}>
             {reviewedToday !== undefined && reviewedToday > 0 && (
-              <Box sx={{
-                py: 1.5,
-                px: 2,
-                borderRadius: 2,
-                bgcolor: 'rgba(79,70,229,0.05)',
-                border: '1px solid rgba(79,70,229,0.1)',
-              }}>
-                <Typography fontSize="0.75rem" color="text.secondary" fontWeight={600} sx={{ mb: 0.25 }}>
-                  Đã ôn hôm nay
-                </Typography>
-                <Typography fontSize="1.5rem" fontWeight={800} color="#4F46E5">
-                  {reviewedToday} thẻ
-                </Typography>
-              </Box>
+              <>
+                <Box sx={{ flex: 1, textAlign: 'center' }}>
+                  <Typography fontWeight={800} fontSize="0.75rem" color="#AFAFAF" sx={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Đã ôn nay
+                  </Typography>
+                  <Typography fontWeight={900} fontSize="1.2rem" color="#58CC02">
+                    {reviewedToday}
+                  </Typography>
+                </Box>
+                {timeDisplay && <Box sx={{ width: 2, bgcolor: '#E5E5E5', my: 1 }} />}
+              </>
             )}
 
-            {timeDisplay && timeDisplay !== 'ngay bây giờ' && (
-              <Box sx={{
-                py: 1.5,
-                px: 2,
-                borderRadius: 2,
-                bgcolor: 'rgba(124,58,237,0.05)',
-                border: '1px solid rgba(124,58,237,0.1)',
-              }}>
-                <Typography fontSize="0.75rem" color="text.secondary" fontWeight={600} sx={{ mb: 0.25 }}>
-                  Thẻ tiếp theo trong
+            {timeDisplay && (
+              <Box sx={{ flex: 1, textAlign: 'center' }}>
+                <Typography fontWeight={800} fontSize="0.75rem" color="#AFAFAF" sx={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  {timeDisplay === 'ngay bây giờ' ? 'Sẵn sàng ôn' : 'Thẻ kế tiếp'}
                 </Typography>
-                <Typography fontSize="1.5rem" fontWeight={800} color="#7C3AED">
+                <Typography fontWeight={900} fontSize="1.2rem" color="#1CB0F6">
                   {timeDisplay}
                 </Typography>
               </Box>
             )}
-
-            {timeDisplay === 'ngay bây giờ' && (
-              <ButtonBase
-                onClick={() => navigate('/study')}
-                sx={{
-                  width: '100%',
-                  px: 4,
-                  py: 1.5,
-                  borderRadius: 3,
-                  background: 'linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%)',
-                  color: '#fff',
-                  fontWeight: 700,
-                  fontSize: '0.9rem',
-                  boxShadow: '0 4px 16px rgba(124,58,237,0.3)',
-                  transition: 'all 0.15s ease',
-                  '&:hover': { filter: 'brightness(1.08)', transform: 'translateY(-1px)' },
-                }}
-              >
-                Ôn tập ngay
-              </ButtonBase>
-            )}
           </Box>
         )}
 
-        {/* Action buttons */}
-        <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 1.5, mt: 0.5 }}>
+        <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 1.5 }}>
           <ButtonBase
             onClick={() => navigate(config.path)}
             sx={{
               width: '100%',
-              px: 4,
-              py: 1.5,
-              borderRadius: 3,
-              background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
+              bgcolor: '#58CC02',
               color: '#fff',
-              fontWeight: 700,
-              fontSize: '0.9rem',
-              boxShadow: '0 4px 16px rgba(79,70,229,0.3)',
-              transition: 'all 0.15s ease',
-              '&:hover': { filter: 'brightness(1.08)', transform: 'translateY(-1px)' },
+              fontSize: '1rem',
+              fontWeight: 800,
+              py: 2,
+              borderRadius: 4,
+              borderBottom: '4px solid #46A302',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              transition: 'all 0.1s',
+              '&:active': {
+                transform: 'translateY(4px)',
+                borderBottomWidth: 0,
+                mt: '4px',
+                mb: '-4px'
+              }
             }}
           >
             {config.cta}
           </ButtonBase>
 
+          {timeDisplay === 'ngay bây giờ' && variant === 'caught-up' && (
+            <ButtonBase
+              onClick={() => navigate('/study')}
+              sx={{
+                width: '100%',
+                bgcolor: '#1CB0F6',
+                color: '#fff',
+                fontSize: '1rem',
+                fontWeight: 800,
+                py: 2,
+                borderRadius: 4,
+                borderBottom: '4px solid #1899D6',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                transition: 'all 0.1s',
+                '&:active': {
+                  transform: 'translateY(4px)',
+                  borderBottomWidth: 0,
+                  mt: '4px',
+                  mb: '-4px'
+                }
+              }}
+            >
+              Ôn ngay
+            </ButtonBase>
+          )}
+
           {variant === 'caught-up' && (
-            <>
-              <ButtonBase
-                onClick={() => navigate('/flashcard/folders')}
-                sx={{
-                  width: '100%',
-                  px: 4,
-                  py: 1.5,
-                  borderRadius: 3,
-                  bgcolor: 'rgba(79,70,229,0.08)',
-                  color: '#4F46E5',
-                  fontWeight: 700,
-                  fontSize: '0.9rem',
-                  transition: 'all 0.15s ease',
-                  '&:hover': { bgcolor: 'rgba(79,70,229,0.12)' },
-                }}
-              >
-                Duyệt thư mục
-              </ButtonBase>
-              <ButtonBase
-                onClick={() => navigate('/dashboard')}
-                sx={{
-                  width: '100%',
-                  px: 4,
-                  py: 1.5,
-                  borderRadius: 3,
-                  bgcolor: 'rgba(79,70,229,0.08)',
-                  color: '#4F46E5',
-                  fontWeight: 700,
-                  fontSize: '0.9rem',
-                  transition: 'all 0.15s ease',
-                  '&:hover': { bgcolor: 'rgba(79,70,229,0.12)' },
-                }}
-              >
-                Về trang chủ
-              </ButtonBase>
-            </>
+            <ButtonBase
+              onClick={() => navigate('/dashboard')}
+              sx={{
+                width: '100%',
+                bgcolor: '#fff',
+                color: '#1CB0F6',
+                fontSize: '1rem',
+                fontWeight: 800,
+                py: 2,
+                borderRadius: 4,
+                border: '2px solid #E5E5E5',
+                borderBottom: '4px solid #E5E5E5',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                transition: 'all 0.1s',
+                '&:active': {
+                  transform: 'translateY(4px)',
+                  borderBottomWidth: '0px',
+                  mt: '4px',
+                  mb: '-4px',
+                  borderColor: '#E5E5E5'
+                }
+              }}
+            >
+              Về Trang Chủ
+            </ButtonBase>
           )}
         </Box>
       </Box>

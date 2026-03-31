@@ -196,7 +196,7 @@ function ChatbotPage() {
         backgroundColor: '#f4f6f9',
       }}
     >
-      <Sidebar isOpen={isSidebarOpen} />
+      <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
 
       <div
         className={`flex-1 transition-all duration-300 ${

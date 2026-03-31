@@ -7,6 +7,9 @@ import { ToastContainer } from 'react-toastify';
 import ScrollToTop from './components/ScrollToTop.jsx';
 import { ModalProvider } from './modal/ModalSystem/ModalProvider';
 import ModalContainer from './modal/ModalSystem/ModalContainer';
+import AchievementToast from './components/Gamification/AchievementToast';
+import LevelUpToast from './components/Gamification/LevelUpToast';
+import ChallengeCompletedToast from './components/Gamification/ChallengeCompletedToast';
 
 import { Provider } from 'react-redux';
 import { store } from './redux/store.js';
@@ -40,6 +43,9 @@ createRoot(document.getElementById('root')).render(
           <ModalProvider>
             <App />
             <ModalContainer />
+            <AchievementToast />
+            <LevelUpToast />
+            <ChallengeCompletedToast />
           </ModalProvider>
           <ToastContainer position="bottom-left" theme="colored" />
         </ConfirmProvider>

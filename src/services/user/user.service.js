@@ -109,6 +109,11 @@ const deleteUser = async (userId) => {
   return response.data;
 };
 
+const getAchievements = async () => {
+  const response = await authorizedAxiosInstance.get(`${API_ROOT}/users/achievements`);
+  return response.data;
+};
+
 export const userService = {
   registerUser,
   verifyUser,
@@ -116,4 +121,5 @@ export const userService = {
   getListUsers,
   updateUserRole,
   deleteUser,
+  getAchievements,
 };

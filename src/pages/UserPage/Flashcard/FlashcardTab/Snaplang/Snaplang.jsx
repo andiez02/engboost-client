@@ -26,7 +26,6 @@ import PhotoCameraOutlinedIcon from '@mui/icons-material/PhotoCameraOutlined';
 import AutoAwesomeOutlinedIcon from '@mui/icons-material/AutoAwesomeOutlined';
 import FloatingNotification from '../../../../../components/Feedback/FloatingNotification';
 import useFloatingNotification from '../../../../../hooks/useFloatingNotification';
-import streakSvg from '../../../../../assets/svg/streak.svg';
 
 const CREATE_STREAK_DAYS_KEY = 'engboost_createflashcards_streak_days';
 const CREATE_STREAK_LAST_DATE_KEY = 'engboost_createflashcards_last_date';
@@ -406,7 +405,7 @@ function Snaplang() {
         onClose={hideNotification}
       />
 
-      {/* Header + 2 options */}
+      {/* Header */}
       <Box sx={{ mb: 4, display: 'flex', flexDirection: 'column', gap: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap' }}>
           <Box>
@@ -416,37 +415,6 @@ function Snaplang() {
             <Typography sx={{ mt: 0.8, color: 'text.secondary', maxWidth: 520 }}>
               Tạo flashcards từ ảnh hoặc từ chủ đề bằng AI. Hãy làm 1 bước nhỏ để tiến bộ mỗi ngày.
             </Typography>
-          </Box>
-
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, flexWrap: 'wrap', justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
-            <StatBadge
-              tint="#4F46E5"
-              icon={
-                <img
-                  src={streakSvg}
-                  alt="Streak"
-                  style={{ width: 18, height: 18, display: 'block' }}
-                />
-              }
-            >
-              {streakDays} ngày
-            </StatBadge>
-
-            <StatBadge
-              tint="#059669"
-              icon={<Box component="span" sx={{ fontSize: 16, lineHeight: 1 }}>📈</Box>}
-            >
-              {reviewedToday} từ hôm nay
-            </StatBadge>
-
-            {notification && rewardData?.xp ? (
-              <StatBadge
-                tint="#C2410C"
-                icon={<Box component="span" sx={{ fontSize: 16, lineHeight: 1 }}>✨</Box>}
-              >
-                +{rewardData.xp} XP
-              </StatBadge>
-            ) : null}
           </Box>
         </Box>
 

@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, ButtonBase, Skeleton } from '@mui/material';
-import { formatTimeRemaining } from '../../../utils/formatTimeRemaining';
+import NextReviewBlock from './NextReviewBlock';
 
 export default function PrimaryActionBlock({ due, nextReviewAt, isLoading, error, onRetry }) {
   const navigate = useNavigate();
@@ -99,8 +99,6 @@ export default function PrimaryActionBlock({ due, nextReviewAt, isLoading, error
   }
 
   // due === 0
-  const timeRemaining = nextReviewAt ? formatTimeRemaining(nextReviewAt) : null;
-
   return (
     <Box sx={{
       width: '100%',
@@ -114,17 +112,11 @@ export default function PrimaryActionBlock({ due, nextReviewAt, isLoading, error
       gap: 2,
     }}>
       <Box>
-        <Typography fontWeight={800} fontSize="1.1rem" sx={{ mb: 0.5 }}>
+        <Typography fontWeight={800} fontSize="1.1rem" sx={{ mb: 1.5 }}>
           🎉 Bạn đã hoàn thành rồi!
         </Typography>
-        {timeRemaining && (
-          <Typography fontSize="0.875rem" color="text.secondary">
-            Ôn lại sau{' '}
-            <Box component="span" sx={{ fontWeight: 700, color: '#4F46E5' }}>
-              {timeRemaining}
-            </Box>{' '}
-            ⏱
-          </Typography>
+        {nextReviewAt && (
+          <NextReviewBlock nextReviewAt={nextReviewAt} />
         )}
       </Box>
 
