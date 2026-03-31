@@ -1,25 +1,39 @@
 import React from 'react';
-import { Box, Fade, IconButton, Typography, alpha } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
+import { IconButton, alpha } from '@mui/material';
 import VolumeUpOutlinedIcon from '@mui/icons-material/VolumeUpOutlined';
-import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
+import EditRoundedIcon from '@mui/icons-material/EditRounded';
+import CloseIcon from '@mui/icons-material/Close';
 import StarBorderRoundedIcon from '@mui/icons-material/StarBorderRounded';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
-import EditRoundedIcon from '@mui/icons-material/EditRounded';
+import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
+import { isSentence } from '../../utils/sentenceDetection';
 
 function safeSpeak(text) {
-  if (!text) return;
-  if (typeof window === 'undefined') return;
-  if (!('speechSynthesis' in window)) return;
+  if (!text || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
   try {
     window.speechSynthesis.cancel();
     const utter = new window.SpeechSynthesisUtterance(text);
     utter.lang = 'en-US';
     utter.rate = 0.95;
     window.speechSynthesis.speak(utter);
-  } catch {
-    // Some browsers may block TTS.
-  }
+  } catch { /* noop */ }
+}
+
+/** Highlight the headword inside the example sentence */
+function HighlightedExample({ text, word }) {
+  if (!text) return null;
+  if (!word) return <span>{text}</span>;
+  const regex = new RegExp(`(${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+  const parts = text.split(regex);
+  return (
+    <>
+      {parts.map((part, i) =>
+        regex.test(part)
+          ? <strong key={i} className="font-bold text-gray-800 not-italic">{part}</strong>
+          : <span key={i}>{part}</span>
+      )}
+    </>
+  );
 }
 
 const FlashcardCard = React.memo(function FlashcardCard({
@@ -29,280 +43,168 @@ const FlashcardCard = React.memo(function FlashcardCard({
   isFavorite = false,
   onToggleFavorite,
   onEdit,
-  showFlipHint = false,
   badgeText,
+  onCardClick,
+  compact = false,
+  dense = false,
+  hideAudio = false,
 }) {
   const imageUrl = card?.imageUrl || card?.image_url || null;
-  const exampleSentence =
-    card?.object ||
-    card?.example_sentence ||
-    card?.exampleSentence ||
-    card?.example ||
-    card?.sentence ||
-    '';
-
-  const handleSpeak = (e) => {
-    e.stopPropagation();
-    safeSpeak(card?.english);
-  };
-
-  const handleRemove = (e) => {
-    e.stopPropagation();
-    onRemove?.(card.id);
-  };
-
-  const handleToggleFavorite = (e) => {
-    e.stopPropagation();
-    onToggleFavorite?.(card.id);
-  };
-
-  const handleEdit = (e) => {
-    e.stopPropagation();
-    onEdit?.(card);
-  };
-
-  const hasImage = Boolean(imageUrl);
+  
+  // Prefer new fields, fallback to object field with sentence detection
+  const example = card?.example || 
+                  (card?.object && isSentence(card.object) ? card.object : '');
+  
+  const pos = card?.pos || 
+              (card?.object && !isSentence(card.object) ? card.object : '');
 
   return (
-    <Fade in timeout={220}>
-      <Box
-        sx={{
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          borderRadius: 3.5,
-          border: '1px solid rgba(15,23,42,0.08)',
-          bgcolor: '#fff',
-          overflow: 'hidden',
-          boxShadow: '0 10px 28px rgba(15,23,42,0.05)',
-          transition: 'transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease',
-          '&:hover': {
-            transform: 'translateY(-2px) scale(1.02)',
-            boxShadow: '0 16px 36px rgba(79,70,229,0.09)',
-            borderColor: 'rgba(79,70,229,0.22)',
-          },
-          '&:active': {
-            transform: 'translateY(-1px) scale(1.01)',
-          },
-        }}
+    <div className={`flex flex-row w-full bg-white border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden ${compact ? 'rounded-lg' : 'rounded-2xl'}`}>
+
+      {/* ── Left: text content (clickable) — full mode only ── */}
+      {!compact && (
+      <div
+        className="flex-1 min-w-0 p-4 flex flex-col gap-1.5 cursor-pointer"
+        onClick={() => onCardClick?.(card)}
       >
-        {/* Media (ONLY when has image) */}
-        {hasImage ? (
-          <Box
-            sx={{
-              width: '100%',
-              aspectRatio: '4 / 3',
-              position: 'relative',
-              bgcolor: '#F8FAFC',
-              background: 'linear-gradient(180deg, rgba(15,23,42,0.02), rgba(15,23,42,0.0))',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
+
+        {/* Row 1: headword + audio */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-2xl font-bold text-gray-900 leading-tight">
+            {card?.english || '—'}
+          </span>
+
+          {badgeText && (
+            <span className="text-[10px] font-black uppercase tracking-wider text-indigo-500 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-full">
+              {badgeText}
+            </span>
+          )}
+
+          {!hideAudio && (
+            <IconButton
+              size="small"
+              onClick={(e) => { e.stopPropagation(); safeSpeak(card?.english); }}
+              sx={{ width: 28, height: 28, borderRadius: 2, color: alpha('#4F46E5', 0.55), '&:hover': { bgcolor: 'rgba(79,70,229,0.08)', color: '#4F46E5' } }}
+            >
+              <VolumeUpOutlinedIcon sx={{ fontSize: 16 }} />
+            </IconButton>
+          )}
+        </div>
+
+        {/* Row 2: meaning */}
+        <p className="text-base font-semibold text-gray-700 leading-snug">
+          {card?.vietnamese || '—'}
+        </p>
+
+        {/* Row 2.5: part of speech badge */}
+        {pos && (
+          <span className="text-xs font-medium text-blue-600 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-md w-fit">
+            {pos}
+          </span>
+        )}
+
+        {/* Row 3: example sentence — hidden in compact mode */}
+        {!compact && example ? (
+          <div className="border-l-2 border-blue-200 pl-3 mt-0.5">
+            <p className="text-sm italic text-gray-500 leading-relaxed">
+              <HighlightedExample text={example} word={card?.english} />
+            </p>
+          </div>
+        ) : null}
+      </div>
+      )} {/* end !compact left column */}
+
+      {/* ── Right: thumbnail + actions — full mode only ── */}
+      {!compact && (
+        <div className="shrink-0 flex flex-col items-end justify-between p-3 gap-2">
+          {imageUrl ? (
             <img
               src={imageUrl}
-              alt={card?.english || 'flashcard image'}
-              style={{
-                width: '92%',
-                height: '92%',
-                objectFit: 'contain',
-                filter: 'drop-shadow(0 10px 20px rgba(15,23,42,0.08))',
-              }}
+              alt={card?.english || ''}
+              className="w-24 h-24 object-cover rounded-xl border border-gray-100"
               loading="lazy"
             />
-
-            {/* top-left badge */}
-            {badgeText ? (
-              <Box
-                sx={{
-                  position: 'absolute',
-                  left: 10,
-                  top: 10,
-                  px: 1.05,
-                  py: 0.5,
-                  borderRadius: 999,
-                  bgcolor: 'rgba(255,255,255,0.82)',
-                  border: '1px solid rgba(15,23,42,0.08)',
-                  backdropFilter: 'blur(10px)',
-                }}
-              >
-                <Typography
-                  sx={{
-                    fontSize: '0.66rem',
-                    fontWeight: 950,
-                    color: '#4338CA',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.08em',
-                    maxWidth: 150,
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  }}
-                >
-                  {badgeText}
-                </Typography>
-              </Box>
-            ) : null}
-          </Box>
-        ) : null}
-
-        {/* Content */}
-        <Box sx={{ p: 1.6, flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <Typography
-            sx={{
-              fontWeight: 900,
-              fontSize: '1rem',
-              color: '#0F172A',
-              letterSpacing: '-0.02em',
-              lineHeight: 1.25,
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-            }}
-          >
-            {card?.english || '—'}
-          </Typography>
-          <Typography
-            sx={{
-              mt: 0.55,
-              fontSize: '0.86rem',
-              color: '#64748B',
-              fontStyle: 'italic',
-              lineHeight: 1.3,
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden',
-            }}
-          >
-            {card?.vietnamese || '—'}
-          </Typography>
-
-          {/* Example sentence (ONLY when no image) */}
-          {!hasImage && exampleSentence ? (
-            <Box
-              sx={{
-                mt: 1,
-                p: 1.1,
-                borderRadius: 3,
-                bgcolor: 'rgba(15,23,42,0.03)',
-                border: '1px solid rgba(15,23,42,0.06)',
-              }}
-            >
-              <Typography
-                sx={{
-                  fontSize: '0.78rem',
-                  color: '#334155',
-                  lineHeight: 1.35,
-                  fontWeight: 650,
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden',
-                }}
-              >
-                “{exampleSentence}”
-              </Typography>
-            </Box>
-          ) : null}
-
-          {showFlipHint ? (
-            <Typography sx={{ mt: 1.1, fontSize: '0.75rem', color: 'rgba(100,116,139,0.75)', fontWeight: 700 }}>
-              Chạm để lật thẻ
-            </Typography>
-          ) : null}
-        </Box>
-
-        {/* Actions (bottom row) */}
-        <Box
-          sx={{
-            px: 1.05,
-            py: 0.85,
-            borderTop: '1px solid rgba(15,23,42,0.07)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 0.5,
-            bgcolor: 'rgba(255,255,255,0.7)',
-            backdropFilter: 'blur(10px)',
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.4 }}>
-            <IconButton
-              size="small"
-              onClick={handleSpeak}
-              sx={{
-                width: 30,
-                height: 30,
-                borderRadius: 3,
-                color: alpha('#4F46E5', 0.6),
-                '&:hover': { bgcolor: 'rgba(79,70,229,0.08)', color: '#4F46E5' },
-              }}
-            >
-              <VolumeUpOutlinedIcon sx={{ fontSize: 17 }} />
-            </IconButton>
-
-            {onToggleFavorite ? (
-              <IconButton
-                size="small"
-                onClick={handleToggleFavorite}
-                sx={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: 3,
-                  color: isFavorite ? '#F59E0B' : alpha('#64748B', 0.55),
-                  '&:hover': { bgcolor: 'rgba(245,158,11,0.10)', color: '#F59E0B' },
-                }}
-              >
-                {isFavorite ? (
-                  <StarRoundedIcon sx={{ fontSize: 17 }} />
-                ) : (
-                  <StarBorderRoundedIcon sx={{ fontSize: 17 }} />
-                )}
-              </IconButton>
-            ) : null}
-
-            {onEdit ? (
-              <IconButton
-                size="small"
-                onClick={handleEdit}
-                sx={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: 3,
-                  color: alpha('#64748B', 0.55),
-                  '&:hover': { bgcolor: 'rgba(2,132,199,0.08)', color: '#0284C7' },
-                }}
-              >
-                <EditRoundedIcon sx={{ fontSize: 17 }} />
-              </IconButton>
-            ) : null}
-          </Box>
-
-          {!isPublic && onRemove ? (
-            <IconButton
-              size="small"
-              aria-label="remove"
-              onClick={handleRemove}
-              sx={{
-                width: 30,
-                height: 30,
-                borderRadius: 3,
-                color: alpha('#64748B', 0.5),
-                '&:hover': { bgcolor: 'rgba(239,68,68,0.08)', color: '#EF4444' },
-              }}
-            >
-              <CloseIcon sx={{ fontSize: 17 }} />
-            </IconButton>
           ) : (
-            <Box sx={{ width: 30, height: 30 }} />
+            <div className="w-24 h-24 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-300">
+              <ImageOutlinedIcon sx={{ fontSize: 28 }} />
+            </div>
           )}
-        </Box>
-      </Box>
-    </Fade>
+
+          <div className="flex items-center gap-1">
+            {onToggleFavorite && (
+              <IconButton
+                size="small"
+                onClick={(e) => { e.stopPropagation(); onToggleFavorite?.(card.id); }}
+                sx={{ width: 28, height: 28, borderRadius: 2, color: isFavorite ? '#F59E0B' : alpha('#64748B', 0.5), '&:hover': { bgcolor: 'rgba(245,158,11,0.1)', color: '#F59E0B' } }}
+              >
+                {isFavorite ? <StarRoundedIcon sx={{ fontSize: 16 }} /> : <StarBorderRoundedIcon sx={{ fontSize: 16 }} />}
+              </IconButton>
+            )}
+
+            {onEdit && (
+              <IconButton
+                size="small"
+                onClick={(e) => { e.stopPropagation(); onEdit?.(card); }}
+                sx={{ width: 28, height: 28, borderRadius: 2, color: alpha('#64748B', 0.5), '&:hover': { bgcolor: 'rgba(2,132,199,0.08)', color: '#0284C7' } }}
+              >
+                <EditRoundedIcon sx={{ fontSize: 16 }} />
+              </IconButton>
+            )}
+
+            {!isPublic && onRemove && (
+              <IconButton
+                size="small"
+                onClick={(e) => { e.stopPropagation(); onRemove?.(card.id); }}
+                sx={{ width: 28, height: 28, borderRadius: 2, color: alpha('#64748B', 0.5), '&:hover': { bgcolor: 'rgba(239,68,68,0.08)', color: '#EF4444' } }}
+              >
+                <CloseIcon sx={{ fontSize: 16 }} />
+              </IconButton>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Compact mode: word list row ── */}
+      {compact && (
+        <div
+          className={`flex-1 min-w-0 flex items-center gap-2 cursor-pointer ${dense ? 'px-2.5 py-1.5' : 'px-4 py-2.5'}`}
+          onClick={() => onCardClick?.(card)}
+        >
+          {/* Left: English + meaning stacked */}
+          <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+            <span className={`font-bold text-gray-900 leading-tight truncate ${dense ? 'text-[12px]' : 'text-[14px]'}`}>
+              {card?.english || '—'}
+            </span>
+            <span className={`text-gray-400 font-medium leading-tight truncate ${dense ? 'text-[11px]' : 'text-[12px]'}`}>
+              {card?.vietnamese || '—'}
+            </span>
+          </div>
+
+          {/* Audio */}
+          {!hideAudio && (
+            <IconButton
+              size="small"
+              onClick={(e) => { e.stopPropagation(); safeSpeak(card?.english); }}
+              sx={{ width: dense ? 20 : 24, height: dense ? 20 : 24, borderRadius: 1.5, flexShrink: 0, color: alpha('#4F46E5', 0.45), '&:hover': { bgcolor: 'rgba(79,70,229,0.08)', color: '#4F46E5' } }}
+            >
+              <VolumeUpOutlinedIcon sx={{ fontSize: dense ? 11 : 13 }} />
+            </IconButton>
+          )}
+
+          {/* Delete */}
+          {!isPublic && onRemove && (
+            <IconButton
+              size="small"
+              onClick={(e) => { e.stopPropagation(); onRemove?.(card.id); }}
+              sx={{ width: dense ? 20 : 24, height: dense ? 20 : 24, borderRadius: 1.5, flexShrink: 0, color: alpha('#64748B', 0.3), '&:hover': { bgcolor: 'rgba(239,68,68,0.08)', color: '#EF4444' } }}
+            >
+              <CloseIcon sx={{ fontSize: dense ? 11 : 13 }} />
+            </IconButton>
+          )}
+        </div>
+      )}
+    </div>
   );
 });
 
 export default FlashcardCard;
-

@@ -200,7 +200,7 @@ function Snaplang() {
       const newFlashcards = data.detections.map((item) => ({
         id: Date.now() + Math.random(),
         imageUrl: previewUrl,
-        object: item.object,
+        pos: item.object,
         english: item.english,
         vietnamese: item.vietnamese,
       }));
@@ -286,7 +286,8 @@ function Snaplang() {
           english: card.english,
           vietnamese: card.vietnamese,
           image_url: card.imageUrl,
-          object: card.object,
+          pos: card.pos,
+          example: card.example,
         })),
       };
 

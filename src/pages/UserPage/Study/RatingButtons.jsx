@@ -1,45 +1,147 @@
-import { Box, ButtonBase, Typography } from '@mui/material';
+import { useState } from 'react';
+import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const RATINGS = [
-  { label: 'Again', value: 0, key: '1', bg: '#FEE2E2', color: '#DC2626', border: '#FECACA' },
-  { label: 'Hard',  value: 1, key: '2', bg: '#FEF3C7', color: '#D97706', border: '#FDE68A' },
-  { label: 'Good',  value: 2, key: '3', bg: '#DCFCE7', color: '#16A34A', border: '#BBF7D0' },
-  { label: 'Easy',  value: 3, key: '4', bg: '#DBEAFE', color: '#2563EB', border: '#BFDBFE' },
+  { label: 'Again', value: 0, key: '1', emoji: '\u274C', bg: '#FEF2F2', color: '#DC2626', border: '#FECACA', shadow: 'rgba(220,38,38,0.25)', xp: 1 },
+  { label: 'Hard',  value: 1, key: '2', emoji: '\uD83D\uDE2C', bg: '#FFFBEB', color: '#D97706', border: '#FDE68A', shadow: 'rgba(217,119,6,0.25)',  xp: 2 },
+  { label: 'Good',  value: 2, key: '3', emoji: '\uD83D\uDE42', bg: '#F0FDF4', color: '#16A34A', border: '#BBF7D0', shadow: 'rgba(22,163,74,0.25)',  xp: 3 },
+  { label: 'Easy',  value: 3, key: '4', emoji: '\uD83D\uDE0E', bg: '#EFF6FF', color: '#2563EB', border: '#BFDBFE', shadow: 'rgba(37,99,235,0.25)', xp: 5 },
 ];
 
+const FEEDBACK = [
+  { rating: 0, messages: ['Keep trying!', 'You got this!', "Don't give up!"] },
+  { rating: 1, messages: ['Getting there!', 'Almost!', 'Keep practicing!'] },
+  { rating: 2, messages: ['Nice!', 'Good job!', 'Keep going!'] },
+  { rating: 3, messages: ['Excellent!', 'You nailed it!', 'Outstanding!'] },
+];
+
+function getFeedback(rating) {
+  const group = FEEDBACK.find((f) => f.rating === rating);
+  const msgs = group?.messages ?? ['Good!'];
+  return msgs[Math.floor(Math.random() * msgs.length)];
+}
+
+function FloatingToasts({ xpItems, feedbackItems }) {
+  return createPortal(
+    <>
+      <AnimatePresence>
+        {xpItems.map(({ id, xp, x, y }) => (
+          <motion.span
+            key={id}
+            initial={{ opacity: 1, y: 0, scale: 1 }}
+            animate={{ opacity: 0, y: -70, scale: 1.2 }}
+            exit={{}}
+            transition={{ duration: 1.4, ease: 'easeOut' }}
+            style={{
+              position: 'fixed',
+              left: x,
+              top: y - 8,
+              transform: 'translateX(-50%)',
+              pointerEvents: 'none',
+              zIndex: 9999,
+              fontWeight: 900,
+              fontSize: '1.15rem',
+              color: '#F59E0B',
+              textShadow: '0 1px 6px rgba(0,0,0,0.18)',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            +{xp} XP
+          </motion.span>
+        ))}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {feedbackItems.map(({ id, text, x, y }) => (
+          <motion.div
+            key={id}
+            initial={{ opacity: 0, y: 4, scale: 0.88 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.92 }}
+            transition={{ duration: 0.22 }}
+            style={{
+              position: 'fixed',
+              left: x,
+              top: y - 48,
+              transform: 'translateX(-50%)',
+              pointerEvents: 'none',
+              zIndex: 9998,
+              whiteSpace: 'nowrap',
+            }}
+            className="text-sm font-bold text-gray-700 bg-white px-4 py-1.5 rounded-full shadow-lg border border-gray-100"
+          >
+            {text}
+          </motion.div>
+        ))}
+      </AnimatePresence>
+    </>,
+    document.body
+  );
+}
+
 export default function RatingButtons({ onRate, disabled }) {
+  const [xpFloats, setXpFloats] = useState([]);
+  const [feedbackFloats, setFeedbackFloats] = useState([]);
+
+  const handleRate = (value, e) => {
+    if (disabled) return;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = rect.left + rect.width / 2;
+    const y = rect.top;
+    const { xp } = RATINGS[value];
+    const id = Date.now();
+
+    // XP float — stays 1.6s
+    setXpFloats((prev) => [...prev, { id, xp, x, y }]);
+    setTimeout(() => setXpFloats((prev) => prev.filter((f) => f.id !== id)), 1600);
+
+    // Feedback toast — stays 2s
+    const text = getFeedback(value);
+    const fid = id + 1;
+    setFeedbackFloats((prev) => [...prev, { id: fid, text, x, y }]);
+    setTimeout(() => setFeedbackFloats((prev) => prev.filter((f) => f.id !== fid)), 2000);
+
+    onRate(value);
+  };
+
   return (
-    <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 1.5, width: '100%' }}>
-      {RATINGS.map(({ label, value, key, bg, color, border }) => (
-        <ButtonBase
-          key={value}
-          disabled={disabled}
-          onClick={() => onRate(value)}
-          sx={{
-            flexDirection: 'column',
-            py: 1.75,
-            px: 1,
-            borderRadius: 3,
-            bgcolor: bg,
-            border: `1.5px solid ${border}`,
-            transition: 'all 0.15s ease',
-            opacity: disabled ? 0.5 : 1,
-            '&:hover': {
-              filter: 'brightness(0.95)',
-              transform: 'translateY(-1px)',
-              boxShadow: `0 4px 12px ${color}30`,
-            },
-            '&:active': { transform: 'translateY(0)' },
-          }}
-        >
-          <Typography sx={{ fontWeight: 700, fontSize: '0.9rem', color, lineHeight: 1.2 }}>
-            {label}
-          </Typography>
-          <Typography sx={{ fontSize: '0.65rem', color, opacity: 0.55, mt: 0.3, fontFamily: 'monospace' }}>
-            [{key}]
-          </Typography>
-        </ButtonBase>
-      ))}
-    </Box>
+    <>
+      <FloatingToasts xpItems={xpFloats} feedbackItems={feedbackFloats} />
+
+      <div className="w-full flex flex-col items-center gap-3">
+        {/* placeholder so layout height stays stable */}
+        <div className="h-8" />
+
+        {/* Buttons */}
+        <div className="grid grid-cols-4 gap-2 w-full">
+          {RATINGS.map(({ label, value, key, emoji, bg, color, border, shadow }) => (
+            <motion.button
+              key={value}
+              disabled={disabled}
+              onClick={(e) => handleRate(value, e)}
+              whileHover={{ scale: disabled ? 1 : 1.04, y: disabled ? 0 : -2 }}
+              whileTap={{ scale: disabled ? 1 : 0.94 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+              className="flex flex-col items-center justify-center gap-1 py-3 px-2 rounded-2xl font-bold text-sm transition-opacity"
+              style={{
+                background: bg,
+                border: `2px solid ${border}`,
+                borderBottomWidth: 4,
+                color,
+                opacity: disabled ? 0.45 : 1,
+                boxShadow: disabled ? 'none' : `0 4px 12px ${shadow}`,
+                cursor: disabled ? 'not-allowed' : 'pointer',
+              }}
+            >
+              <span className="text-xl leading-none">{emoji}</span>
+              <span className="text-xs font-black">{label}</span>
+              <span className="text-[10px] opacity-40 font-mono">[{key}]</span>
+            </motion.button>
+          ))}
+        </div>
+      </div>
+    </>
   );
 }

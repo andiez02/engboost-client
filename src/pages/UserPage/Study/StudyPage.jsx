@@ -1,7 +1,7 @@
 import { useEffect, useCallback, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Box, Typography, CircularProgress, Fade } from '@mui/material';
+import { Box, Typography, CircularProgress } from '@mui/material';
 import { flipCard, resetSession } from '../../../redux/study/studySlice';
 import { useStudySession } from './useStudySession';
 import FlashcardView from './FlashcardView';
@@ -103,56 +103,42 @@ export default function StudyPage() {
   /* ── study UI ── */
   return (
     <>
-      <Fade in timeout={300}>
-        <Box
-          sx={{
-            minHeight: '100vh',
-            background: 'linear-gradient(160deg, #f0f0ff 0%, #f8f8ff 50%, #f0f7ff 100%)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            px: 2,
-            py: 4,
-          }}
-        >
-          <Box sx={{ width: '100%', maxWidth: 560, display: 'flex', flexDirection: 'column', gap: 3 }}>
-            {/* header */}
-            <StudyHeader
-              folderName={undefined}
-              onLeave={() => setLeaveDialogOpen(true)}
-            />
+      <div
+        className="min-h-screen flex flex-col items-center justify-center px-4 py-6"
+        style={{ background: 'linear-gradient(160deg, #f0f0ff 0%, #f8f8ff 50%, #f0f7ff 100%)' }}
+      >
+        <div className="w-full max-w-2xl flex flex-col gap-4">
+          {/* header */}
+          <StudyHeader
+            folderName={undefined}
+            onLeave={() => setLeaveDialogOpen(true)}
+            xpGained={xpGained}
+          />
 
-            {/* flashcard */}
-            <FlashcardView card={currentCard} isTransitioning={isTransitioning} />
+          {/* flashcard */}
+          <FlashcardView card={currentCard} isTransitioning={isTransitioning} />
 
-            {/* bottom area — fixed height so card never shifts */}
-            <Box sx={{ height: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-              {isFlipped ? (
-                <RatingButtons onRate={handleRate} disabled={isSubmitting || isTransitioning} />
-              ) : (
-                <Typography variant="caption" color="text.disabled" textAlign="center">
-                  Click the card or press{' '}
-                  <Box
-                    component="kbd"
-                    sx={{
-                      px: 0.75,
-                      py: 0.25,
-                      bgcolor: 'grey.100',
-                      borderRadius: 1,
-                      fontSize: '0.7rem',
-                      fontFamily: 'monospace',
-                    }}
-                  >
-                    Space
-                  </Box>{' '}
-                  to flip
-                </Typography>
-              )}
-            </Box>
-          </Box>
-        </Box>
-      </Fade>
+          {/* bottom area — fixed height prevents card from jumping when buttons appear */}
+          <div className="h-32 flex flex-col items-center justify-center relative">
+            <div
+              className="absolute inset-0 flex flex-col items-center justify-center transition-opacity duration-200"
+              style={{ opacity: isFlipped ? 0 : 1, pointerEvents: isFlipped ? 'none' : 'auto' }}
+            >
+              <p className="text-xs text-gray-400 text-center">
+                Click the card or press{' '}
+                <kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-[11px] font-mono">Space</kbd>{' '}
+                to flip
+              </p>
+            </div>
+            <div
+              className="absolute inset-0 flex flex-col items-center justify-center transition-opacity duration-200"
+              style={{ opacity: isFlipped ? 1 : 0, pointerEvents: isFlipped ? 'auto' : 'none' }}
+            >
+              <RatingButtons onRate={handleRate} disabled={isSubmitting || isTransitioning || !isFlipped} />
+            </div>
+          </div>
+        </div>
+      </div>
       <LeaveSessionDialog
         open={leaveDialogOpen}
         onCancel={() => setLeaveDialogOpen(false)}
