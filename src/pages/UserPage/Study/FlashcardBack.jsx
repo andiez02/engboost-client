@@ -1,12 +1,7 @@
 import { motion } from 'framer-motion';
-import { isSentence } from '../../../utils/sentenceDetection';
 
 export default function FlashcardBack({ card }) {
   if (!card) return null;
-
-  // Prefer new fields, fallback to object field with sentence detection
-  const example = card?.example || 
-                  (card?.object && isSentence(card.object) ? card.object : '');
 
   return (
     <motion.div
@@ -26,9 +21,9 @@ export default function FlashcardBack({ card }) {
       </p>
 
       {/* Example on back — minimal */}
-      {example ? (
+      {card.example ? (
         <p className="text-sm italic text-white/50 text-center leading-relaxed mt-2 max-w-xs">
-          {example}
+          {card.example}
         </p>
       ) : null}
 

@@ -1,16 +1,8 @@
 import { motion } from 'framer-motion';
 import { highlightWord } from './utils/highlightWord';
-import { isSentence } from '../../../utils/sentenceDetection';
 
 export default function FlashcardFront({ card }) {
   if (!card) return null;
-
-  // Prefer new fields, fallback to object field with sentence detection
-  const example = card?.example || 
-                  (card?.object && isSentence(card.object) ? card.object : '');
-  
-  const pos = card?.pos || 
-              (card?.object && !isSentence(card.object) ? card.object : '');
 
   return (
     <motion.div
@@ -36,15 +28,15 @@ export default function FlashcardFront({ card }) {
         <p className="text-4xl font-black text-gray-900 text-center leading-tight tracking-tight">
           {card.english || ''}
         </p>
-        {pos ? (
-          <p className="text-xs italic text-gray-400">{pos}</p>
+        {card.object ? (
+          <p className="text-xs italic text-gray-400">{card.object}</p>
         ) : null}
       </div>
 
       {/* Example — supporting */}
-      {example ? (
+      {card.example ? (
         <p className="text-sm italic text-gray-500 text-center leading-relaxed w-full">
-          {highlightWord(example, card.english)}
+          {highlightWord(card.example, card.english)}
         </p>
       ) : null}
 

@@ -6,7 +6,6 @@ import CloseIcon from '@mui/icons-material/Close';
 import StarBorderRoundedIcon from '@mui/icons-material/StarBorderRounded';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
-import { isSentence } from '../../utils/sentenceDetection';
 
 function safeSpeak(text) {
   if (!text || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
@@ -50,13 +49,13 @@ const FlashcardCard = React.memo(function FlashcardCard({
   hideAudio = false,
 }) {
   const imageUrl = card?.imageUrl || card?.image_url || null;
-  
-  // Prefer new fields, fallback to object field with sentence detection
-  const example = card?.example || 
-                  (card?.object && isSentence(card.object) ? card.object : '');
-  
-  const pos = card?.pos || 
-              (card?.object && !isSentence(card.object) ? card.object : '');
+  const example =
+    card?.example ||
+    card?.example_sentence ||
+    card?.exampleSentence ||
+    card?.sentence ||
+    card?.object ||
+    '';
 
   return (
     <div className={`flex flex-row w-full bg-white border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden ${compact ? 'rounded-lg' : 'rounded-2xl'}`}>
@@ -95,13 +94,6 @@ const FlashcardCard = React.memo(function FlashcardCard({
         <p className="text-base font-semibold text-gray-700 leading-snug">
           {card?.vietnamese || '—'}
         </p>
-
-        {/* Row 2.5: part of speech badge */}
-        {pos && (
-          <span className="text-xs font-medium text-blue-600 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-md w-fit">
-            {pos}
-          </span>
-        )}
 
         {/* Row 3: example sentence — hidden in compact mode */}
         {!compact && example ? (
