@@ -66,6 +66,36 @@ function parseLocalISODate(s) {
   return new Date(y, m - 1, d);
 }
 
+function buildSensesFromDetection(item) {
+  if (Array.isArray(item?.senses) && item.senses.length > 0) {
+    return item.senses;
+  }
+
+  const detectedExamples = Array.isArray(item?.examples)
+    ? item.examples
+    : item?.example
+      ? [item.example]
+      : [];
+
+  const normalizedExamples = detectedExamples
+    .map((ex) => (typeof ex === 'string' ? { sentence: ex } : ex))
+    .filter((ex) => ex?.sentence)
+    .map((ex) => ({
+      sentence: String(ex.sentence).trim(),
+      translation: ex?.translation ? String(ex.translation).trim() : undefined,
+    }));
+
+  const headword = (item?.headword || item?.english || '').trim();
+  const translation = (item?.translation || item?.vietnamese || headword).trim();
+  const definition = (item?.definition || `${headword}: ${translation}`).trim();
+
+  return [{
+    translation,
+    definition,
+    examples: normalizedExamples,
+  }];
+}
+
 function Snaplang() {
   const { openModal } = useModal();
   const location = useLocation();
@@ -200,9 +230,13 @@ function Snaplang() {
       const newFlashcards = data.detections.map((item) => ({
         id: Date.now() + Math.random(),
         imageUrl: previewUrl,
-        pos: item.object,
-        english: item.english,
-        vietnamese: item.vietnamese,
+        image_url: previewUrl,
+        pos: item.pos || item.object || null,
+        headword: item.headword || item.english,
+        english: item.headword || item.english,
+        translation: item.translation || item.vietnamese,
+        vietnamese: item.translation || item.vietnamese,
+        senses: buildSensesFromDetection(item),
       }));
 
       setFlashcards((prev) => [...newFlashcards, ...prev]);
@@ -283,11 +317,16 @@ function Snaplang() {
       const data = {
         create_new_folder: folderData.isNew,
         flashcards: flashcards.map((card) => ({
-          english: card.english,
-          vietnamese: card.vietnamese,
+          headword: card.headword || card.english,
           image_url: card.imageUrl,
           pos: card.pos,
-          example: card.example,
+          senses: Array.isArray(card.senses) && card.senses.length > 0
+            ? card.senses
+            : [{
+              translation: card.translation || card.vietnamese || card.headword || card.english || '',
+              definition: card.definition || `${card.headword || card.english}: ${card.translation || card.vietnamese || card.headword || card.english}`,
+              examples: card.example ? [{ sentence: card.example }] : [],
+            }],
         })),
       };
 

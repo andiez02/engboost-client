@@ -32,6 +32,7 @@ import {
   saveFlashcardsToFolderAPI,
   makeFolderPublicAPI,
 } from '../../apis/index';
+import { getFlashcardViewModel } from '../../utils/flashcardSelectors';
 
 const AdminFolderDetailModal = ({
   open,
@@ -87,11 +88,15 @@ const AdminFolderDetailModal = ({
       console.log('Fetching flashcards for folder:', selectedFolder._id);
       const data = await getFlashcardsByFolderAPI(selectedFolder._id);
       // Map english and vietnamese to front and back for display
-      const formattedData = data.map((card) => ({
-        ...card,
-        front: card.english,
-        back: card.vietnamese,
-      }));
+      const formattedData = data.map((card) => {
+        const vm = getFlashcardViewModel(card);
+        return {
+          ...card,
+          front: vm.headword,
+          back: vm.translation,
+          image_url: vm.imageUrl,
+        };
+      });
       console.log('Formatted flashcards:', formattedData);
       setFlashcards(formattedData);
     } catch (error) {

@@ -2,12 +2,16 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Volume2, X } from 'lucide-react';
 import { gamify as t } from '../../../../../../theme';
+import { getFlashcardViewModel } from '../../../../../../utils/flashcardSelectors';
 
 const MotionDiv = motion.div;
 
 const FlashcardItem = React.memo(({ card, onRemove }) => {
+  const viewModel = getFlashcardViewModel(card);
+  const { headword, pos, translation, imageUrl } = viewModel || {};
+
   const speak = () => {
-    const text = card?.english;
+    const text = headword || card?.english;
     if (!text) return;
     if (typeof window === 'undefined') return;
     if (!('speechSynthesis' in window)) return;
@@ -56,10 +60,10 @@ const FlashcardItem = React.memo(({ card, onRemove }) => {
       {/* Image (top) */}
       <div className="h-[140px] rounded-2xl overflow-hidden border-2 flex items-center justify-center relative"
         style={{ backgroundColor: t.surface, borderColor: t.gray }}>
-        {card.imageUrl ? (
+        {imageUrl ? (
           <img
-            src={card.imageUrl}
-            alt={card.object || card.english}
+            src={imageUrl}
+            alt={headword || ''}
             className="w-[92%] h-[92%] object-contain"
           />
         ) : (
@@ -68,17 +72,17 @@ const FlashcardItem = React.memo(({ card, onRemove }) => {
       </div>
 
       <div className="mt-3.5 flex flex-col gap-1.5">
-        {card.object && (
+        {pos && (
           <span className="text-[11px] font-black uppercase tracking-widest leading-none"
             style={{ color: t.blue }}>
-            {card.object}
+            {pos}
           </span>
         )}
 
         <div className="flex items-start justify-between gap-2">
           <span className="text-[17px] font-black tracking-tight leading-snug truncate"
             style={{ color: t.text }}>
-            {card.english}
+            {headword || ''}
           </span>
 
           {/* Speaker (optional) */}
@@ -97,7 +101,7 @@ const FlashcardItem = React.memo(({ card, onRemove }) => {
 
         <span className="text-[14px] font-bold leading-snug line-clamp-2"
           style={{ color: t.sub }}>
-          {card.vietnamese}
+          {translation}
         </span>
       </div>
     </MotionDiv>

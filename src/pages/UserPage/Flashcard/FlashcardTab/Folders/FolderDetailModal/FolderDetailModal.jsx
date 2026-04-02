@@ -42,6 +42,7 @@ import FlashcardCard from '../../../../../../components/Flashcard/FlashcardCard'
 import { updateFlashcardCount } from '../../../../../../redux/folder/folderSlice';
 import ShareModal from '../../../../../../components/Post/ShareModal';
 import { gamify as t, btn3d } from '../../../../../../theme';
+import { getFlashcardViewModel } from '../../../../../../utils/flashcardSelectors';
 
 /* ─── Shared speak helper ───────────────────────────────────────────────── */
 function safeSpeak(text) {
@@ -55,17 +56,42 @@ function safeSpeak(text) {
   } catch { /* noop */ }
 }
 
+/* ─── Inline Highlight Helper ───────────────────────────────────────────── */
+const HighlightedExample = memo(({ text, word }) => {
+  if (!word || !text) return <span>{text}</span>;
+  const parts = text.split(new RegExp(`(${word})`, 'gi'));
+  return (
+    <span>
+      {parts.map((part, i) =>
+        part.toLowerCase() === word.toLowerCase() ? (
+          <strong key={i} style={{ color: t.blue, fontWeight: 900 }}>{part}</strong>
+        ) : (
+          <span key={i}>{part}</span>
+        )
+      )}
+    </span>
+  );
+});
+
 /* ─── Inline card detail panel (renders inside Dialog) ──────────────────── */
 const CardDetailPanel = memo(function CardDetailPanel({ card, cards, onClose, onNavigate }) {
-  if (!card) return null;
-  const idx = cards.findIndex((c) => (c.id || c._id) === (card.id || card._id));
+  const currentCardId = card?.id || card?._id;
+  const idx = cards.findIndex((c) => (c.id || c._id) === currentCardId);
   const hasPrev = idx > 0;
   const hasNext = idx < cards.length - 1;
-  const imageUrl = card.image_url || card.imageUrl || null;
-  const example = card.example || card.example_sentence || card.exampleSentence || card.sentence || '';
+  const viewModel = getFlashcardViewModel(card);
+  const { imageUrl, pos, headword, senses, translation, definition, example } = viewModel || {};
+  const normalizedSenses = Array.isArray(senses) && senses.length > 0
+    ? senses
+    : [{
+      translation: translation || null,
+      definition: definition || null,
+      examples: example ? [{ sentence: example, translation: null }] : [],
+    }];
 
   /* Keyboard navigation */
   useEffect(() => {
+    if (!card) return undefined;
     const handler = (e) => {
       if (e.key === 'ArrowLeft' && hasPrev) onNavigate(idx - 1);
       if (e.key === 'ArrowRight' && hasNext) onNavigate(idx + 1);
@@ -73,7 +99,9 @@ const CardDetailPanel = memo(function CardDetailPanel({ card, cards, onClose, on
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [idx, hasPrev, hasNext, onNavigate, onClose]);
+  }, [card, idx, hasPrev, hasNext, onNavigate, onClose]);
+
+  if (!card) return null;
 
   return (
     <Slide direction="left" in mountOnEnter unmountOnExit>
@@ -83,181 +111,249 @@ const CardDetailPanel = memo(function CardDetailPanel({ card, cards, onClose, on
         borderLeft: `2px solid ${t.gray}`,
         display: 'flex',
         flexDirection: 'column',
-        bgcolor: '#fff',
+        bgcolor: t.surface,
         overflow: 'hidden',
         position: 'relative',
+        minHeight: 0,
       }}>
         {/* Panel header */}
         <Box sx={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          px: 2.5, py: 1.5, borderBottom: `2px solid ${t.gray}`, flexShrink: 0,
-          bgcolor: '#fafbfc',
+          px: 2.5, py: 1.5, borderBottom: `4px solid ${t.grayDark}`, flexShrink: 0,
+          bgcolor: '#fff',
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <AutoStoriesOutlined sx={{ fontSize: 14, color: t.sub }} />
-            <Typography sx={{ fontWeight: 800, fontSize: '0.72rem', color: t.sub, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+            <AutoStoriesOutlined sx={{ fontSize: 16, color: t.sub }} />
+            <Typography sx={{ fontWeight: 900, fontSize: '0.8rem', color: t.sub, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
               {idx + 1} / {cards.length}
             </Typography>
           </Box>
-          <Stack direction="row" spacing={0.5}>
+          <Stack direction="row" spacing={0.8}>
             <IconButton size="small" disabled={!hasPrev} onClick={() => onNavigate(idx - 1)}
               sx={{
-                width: 28, height: 28, borderRadius: 2,
-                border: `1.5px solid ${hasPrev ? t.blue : t.gray}`,
-                color: hasPrev ? t.blue : t.gray,
-                transition: 'all 0.15s ease',
-                '&:hover': hasPrev ? { bgcolor: t.blueBg, borderColor: t.blue } : {},
+                width: 32, height: 32, borderRadius: 3,
+                border: `2px solid ${hasPrev ? t.blue : t.gray}`,
+                borderBottom: `4px solid ${hasPrev ? t.blueDark : t.grayDark}`,
+                color: hasPrev ? t.blue : t.sub,
+                bgcolor: hasPrev ? '#fff' : t.surface,
+                transition: 'all 0.1s ease',
+                '&:hover': hasPrev ? { bgcolor: t.blueBg } : {},
+                '&:active': hasPrev ? { transform: 'translateY(2px)', borderBottomWidth: '2px' } : {},
               }}>
-              <ArrowBackIos sx={{ fontSize: 11, ml: 0.3 }} />
+              <ArrowBackIos sx={{ fontSize: 13, ml: 0.5 }} />
             </IconButton>
             <IconButton size="small" disabled={!hasNext} onClick={() => onNavigate(idx + 1)}
               sx={{
-                width: 28, height: 28, borderRadius: 2,
-                border: `1.5px solid ${hasNext ? t.blue : t.gray}`,
-                color: hasNext ? t.blue : t.gray,
-                transition: 'all 0.15s ease',
-                '&:hover': hasNext ? { bgcolor: t.blueBg, borderColor: t.blue } : {},
+                width: 32, height: 32, borderRadius: 3,
+                border: `2px solid ${hasNext ? t.blue : t.gray}`,
+                borderBottom: `4px solid ${hasNext ? t.blueDark : t.grayDark}`,
+                color: hasNext ? t.blue : t.sub,
+                bgcolor: hasNext ? '#fff' : t.surface,
+                transition: 'all 0.1s ease',
+                '&:hover': hasNext ? { bgcolor: t.blueBg } : {},
+                '&:active': hasNext ? { transform: 'translateY(2px)', borderBottomWidth: '2px' } : {},
               }}>
-              <ArrowForwardIos sx={{ fontSize: 11 }} />
+              <ArrowForwardIos sx={{ fontSize: 13 }} />
             </IconButton>
             <IconButton size="small" onClick={onClose}
               sx={{
-                width: 28, height: 28, borderRadius: 2,
-                border: `1.5px solid ${t.gray}`, color: t.sub,
-                transition: 'all 0.15s ease',
-                '&:hover': { bgcolor: t.redBg, color: t.red, borderColor: t.red },
+                width: 32, height: 32, borderRadius: 3,
+                border: `2px solid ${t.gray}`, borderBottom: `4px solid ${t.grayDark}`,
+                color: t.sub, bgcolor: '#fff',
+                transition: 'all 0.1s ease',
+                '&:hover': { bgcolor: t.redBg, color: t.red, borderColor: t.red, borderBottomColor: t.redDark },
+                '&:active': { transform: 'translateY(2px)', borderBottomWidth: '2px' },
               }}>
-              <Close sx={{ fontSize: 13 }} />
+              <Close sx={{ fontSize: 16 }} />
             </IconButton>
           </Stack>
         </Box>
 
-        {/* Oxford-style dictionary content */}
+        {/* Oxford compact content */}
         <Box sx={{
-          flex: 1, overflow: 'auto', px: 4, py: 3,
-          display: 'flex', flexDirection: 'column', gap: 0,
+          flex: 1, overflowY: 'auto', overflowX: 'hidden', p: { xs: 1.5, sm: 2 },
+          display: 'flex', flexDirection: 'column', gap: 1.5,
           width: '100%',
-          '&::-webkit-scrollbar': { width: 4 },
-          '&::-webkit-scrollbar-thumb': { background: t.gray, borderRadius: 10 },
+          minHeight: 0,
+          WebkitOverflowScrolling: 'touch',
+          '&::-webkit-scrollbar': { width: 6 },
+          '&::-webkit-scrollbar-thumb': { background: t.grayDark, borderRadius: 10 },
         }}>
 
-          {/* ── Headword block ── */}
-          <Fade in timeout={300}>
-            <Box sx={{ mb: 3, width: '100%' }}>
-              {/* Word */}
-              <Typography sx={{
-                fontSize: '2.2rem', fontWeight: 900, color: '#1a1a2e',
-                lineHeight: 1.1, letterSpacing: '-0.02em', fontFamily: 'Georgia, serif',
-                width: '100%',
-              }}>
-                {card.english || '—'}
-              </Typography>
-
-              {/* Part of speech + audio row */}
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.75 }}>
-                {card.object && (
-                  <Typography component="span" sx={{
-                    fontSize: '0.78rem', fontStyle: 'italic',
-                    color: '#fff', fontWeight: 700,
-                    bgcolor: '#c0392b', px: 1, py: 0.15, borderRadius: 1,
-                    lineHeight: 1.5,
-                  }}>
-                    {card.object}
+          {/* ── Image block (top) ── */}
+          <Fade in timeout={260}>
+            <Box sx={{
+              borderRadius: 3, overflow: 'hidden',
+              border: `1px solid ${t.gray}`,
+              bgcolor: '#fff', p: 1,
+            }}>
+              {imageUrl ? (
+                <img src={imageUrl} alt={headword || ''} loading="lazy"
+                  style={{
+                    width: '100%',
+                    height: 'clamp(180px, 34vh, 320px)',
+                    objectFit: 'contain',
+                    display: 'block',
+                    borderRadius: 8,
+                    background: '#f8fafc',
+                    margin: '0 auto',
+                  }} />
+              ) : (
+                <Box sx={{
+                  minHeight: 160,
+                  borderRadius: 2,
+                  bgcolor: '#f8fafc',
+                  border: `1px dashed ${t.grayDark}`,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 1,
+                }}>
+                  <AutoStoriesOutlined sx={{ color: t.sub, fontSize: 28 }} />
+                  <Typography sx={{ color: t.sub, fontWeight: 800, fontSize: '0.8rem' }}>
+                    Chưa có hình minh họa
                   </Typography>
-                )}
-                <IconButton size="small" onClick={() => safeSpeak(card.english)}
-                  sx={{
-                    width: 28, height: 28, borderRadius: 2,
-                    color: t.blue, bgcolor: t.blueBg,
-                    border: `1.5px solid ${t.blue}`,
-                    transition: 'all 0.2s ease',
-                    '&:hover': { bgcolor: t.blue, color: '#fff', transform: 'scale(1.08)' },
-                    '&:active': { transform: 'scale(0.95)' },
+                </Box>
+              )}
+            </Box>
+          </Fade>
+
+          {/* ── Headword hero block ── */}
+          <Fade in timeout={300}>
+            <Box sx={{
+              p: 2, bgcolor: '#fff', borderRadius: 3,
+              border: `1px solid ${t.gray}`,
+            }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8, flexWrap: 'wrap', mb: 0.9 }}>
+                    {pos && (
+                      <Typography sx={{
+                        display: 'inline-block',
+                        fontSize: '0.68rem', fontWeight: 800, textTransform: 'uppercase',
+                        color: t.sub, bgcolor: t.surface, px: 0.9, py: 0.2, borderRadius: 1.5,
+                        border: `1px solid ${t.grayDark}`,
+                      }}>
+                        {pos}
+                      </Typography>
+                    )}
+                  </Box>
+                  <Typography sx={{
+                    fontSize: { xs: '1.75rem', sm: '2rem' }, fontWeight: 900, color: t.text,
+                    lineHeight: 1.15, letterSpacing: '-0.01em',
                   }}>
-                  <VolumeUpOutlined sx={{ fontSize: 15 }} />
+                    {headword || '—'}
+                  </Typography>
+                </Box>
+                <IconButton onClick={() => safeSpeak(headword)}
+                  sx={{
+                    width: 38, height: 38, borderRadius: 2,
+                    color: t.sub, bgcolor: '#fff',
+                    border: `1px solid ${t.grayDark}`,
+                    '&:hover': { bgcolor: t.surface, color: t.text },
+                  }}>
+                  <VolumeUpOutlined sx={{ fontSize: 20 }} />
                 </IconButton>
               </Box>
-
-              {/* Accent divider */}
-              <Box sx={{
-                mt: 1.5, height: 3, borderRadius: 2, width: 48,
-                background: 'linear-gradient(90deg, #c0392b, #e74c3c)',
-              }} />
+              <Typography sx={{ mt: 0.8, fontSize: '0.88rem', color: t.text, fontWeight: 700, lineHeight: 1.45 }}>
+                {translation || 'Chưa có nghĩa chính cho từ này.'}
+              </Typography>
             </Box>
           </Fade>
 
-          {/* ── Image (if present) ── */}
-          {imageUrl && (
-            <Fade in timeout={400}>
-              <Box sx={{
-                mb: 3, borderRadius: 3, overflow: 'hidden',
-                border: `1.5px solid ${t.gray}`, bgcolor: '#fafafa',
-                width: '100%',
-                transition: 'box-shadow 0.2s ease',
-                '&:hover': { boxShadow: '0 4px 16px rgba(0,0,0,0.08)' },
-              }}>
-                <img src={imageUrl} alt={card.english || ''} loading="lazy"
-                  style={{ width: '100%', maxHeight: 320, objectFit: 'contain', display: 'block' }} />
-              </Box>
-            </Fade>
-          )}
-
-          {/* ── Meaning block ── */}
-          <Fade in timeout={500}>
-            <Box sx={{ mb: 3, width: '100%' }}>
-              <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, mb: 0.75 }}>
-                <Typography sx={{
-                  fontSize: '0.65rem', fontWeight: 900, color: t.sub,
-                  textTransform: 'uppercase', letterSpacing: '0.12em', flexShrink: 0,
-                }}>
-                  nghĩa
-                </Typography>
-                <Box sx={{ flex: 1, height: '1px', bgcolor: t.gray }} />
-              </Box>
-              <Box sx={{
-                pl: 1.5,
-                borderLeft: `3px solid ${t.blue}`,
-                py: 0.5,
-              }}>
-                <Typography sx={{
-                  fontSize: '1.2rem', fontWeight: 700, color: '#1a1a2e',
-                  lineHeight: 1.45,
-                }}>
-                  {card.vietnamese || '—'}
-                </Typography>
-              </Box>
-            </Box>
-          </Fade>
-
-          {/* ── Example block ── */}
-          {example && (
-            <Fade in timeout={600}>
-              <Box sx={{ mb: 3, width: '100%' }}>
-                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, mb: 0.75 }}>
-                  <Typography sx={{
-                    fontSize: '0.65rem', fontWeight: 900, color: t.sub,
-                    textTransform: 'uppercase', letterSpacing: '0.12em', flexShrink: 0,
+          {/* ── Senses list ── */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+            {normalizedSenses.map((sense, i) => {
+              const examples = Array.isArray(sense?.examples) ? sense.examples : [];
+              const hasMeaning = Boolean(sense?.translation || sense?.definition);
+              return (
+                <Fade in timeout={500 + i * 90} key={i}>
+                  <Box sx={{
+                    p: 2, bgcolor: '#fff', borderRadius: 3,
+                    border: `1px solid ${t.gray}`,
                   }}>
-                    ví dụ
-                  </Typography>
-                  <Box sx={{ flex: 1, height: '1px', bgcolor: t.gray }} />
-                </Box>
-                <Box sx={{
-                  pl: 1.5,
-                  borderLeft: '3px solid #c0392b',
-                  bgcolor: 'rgba(192,57,43,0.03)',
-                  py: 1, pr: 1, borderRadius: '0 8px 8px 0',
-                }}>
-                  <Typography sx={{
-                    fontSize: '0.9rem', fontStyle: 'italic', color: '#475569',
-                    lineHeight: 1.75, fontFamily: 'Georgia, serif',
-                  }}>
-                    &ldquo;{example}&rdquo;
-                  </Typography>
-                </Box>
-              </Box>
-            </Fade>
-          )}
+                    <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, mb: hasMeaning ? 0.8 : 0 }}>
+                      <Box sx={{
+                        width: 20, height: 20, borderRadius: '50%',
+                        bgcolor: t.surface, color: t.sub, fontWeight: 800,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '0.72rem', border: `1px solid ${t.grayDark}`,
+                        flexShrink: 0,
+                      }}>
+                        {i + 1}
+                      </Box>
+                      <Typography sx={{ fontSize: '0.68rem', fontWeight: 800, color: t.sub, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                        Sense
+                      </Typography>
+                    </Box>
+
+                    {hasMeaning ? (
+                      <>
+                        <Typography sx={{ fontSize: '1rem', fontWeight: 800, color: t.text, pl: { xs: 0, sm: 3.2 }, mb: 0.6 }}>
+                          {sense.translation || 'Chưa có bản dịch cho nghĩa này.'}
+                        </Typography>
+                        <Typography sx={{
+                          fontSize: '0.84rem',
+                          fontWeight: 700,
+                          color: t.sub,
+                          mb: examples.length > 0 ? 1.1 : 0,
+                          pl: { xs: 0, sm: 3.2 },
+                          lineHeight: 1.45,
+                        }}>
+                          {sense.definition || 'Chưa có định nghĩa chi tiết.'}
+                        </Typography>
+                      </>
+                    ) : (
+                      <Typography sx={{ fontSize: '0.9rem', fontWeight: 700, color: t.sub, pl: { xs: 0, sm: 4.8 } }}>
+                        Chưa có nội dung cho nghĩa này.
+                      </Typography>
+                    )}
+
+                    {examples.length > 0 ? (
+                      <Box sx={{ pl: { xs: 0, sm: 3.2 }, display: 'flex', flexDirection: 'column', gap: 0.9, mt: 1 }}>
+                        {examples.map((ex, j) => (
+                          <Box key={j} sx={{
+                            p: 1.3, borderRadius: 2,
+                            bgcolor: '#f8fafc', border: `1px solid ${t.gray}`,
+                          }}>
+                            <Typography sx={{ fontSize: '0.86rem', fontWeight: 600, color: t.text, fontStyle: 'italic', lineHeight: 1.45 }}>
+                              &ldquo;<HighlightedExample text={ex.sentence} word={headword} />&rdquo;
+                            </Typography>
+                            <Typography sx={{ fontSize: '0.72rem', fontWeight: 800, color: t.sub, mt: 0.6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                              Example {j + 1}
+                            </Typography>
+                            {ex.translation && (
+                              <Typography sx={{ fontSize: '0.8rem', fontWeight: 700, color: t.sub, mt: 0.4 }}>
+                                {ex.translation}
+                              </Typography>
+                            )}
+                          </Box>
+                        ))}
+                      </Box>
+                    ) : (
+                      <Box sx={{ pl: { xs: 0, sm: 3.2 }, mt: 1 }}>
+                        <Typography sx={{
+                          fontSize: '0.78rem',
+                          fontWeight: 700,
+                          color: t.sub,
+                          bgcolor: '#f8fafc',
+                          border: `1px dashed ${t.grayDark}`,
+                          borderRadius: 2,
+                          px: 1.1,
+                          py: 0.8,
+                          display: 'inline-block',
+                        }}>
+                          Chưa có ví dụ cho nghĩa này.
+                        </Typography>
+                      </Box>
+                    )}
+                  </Box>
+                </Fade>
+              );
+            })}
+          </Box>
+
         </Box>
       </Box>
     </Slide>
@@ -378,10 +474,10 @@ const CardListItem = memo(({ card, isActive, onCardClick, onRemove, index }) => 
   return (
     <div
       style={{
-        background: isActive ? 'rgba(28,176,246,0.06)' : 'transparent',
-        borderRadius: 10,
-        outline: isActive ? `2px solid rgba(28,176,246,0.3)` : 'none',
-        outlineOffset: -1,
+        background: isActive ? 'rgba(59,130,246,0.07)' : '#fff',
+        borderRadius: 8,
+        border: isActive ? '1px solid rgba(59,130,246,0.35)' : '1px solid rgba(148,163,184,0.22)',
+        boxShadow: isActive ? 'inset 2px 0 0 #3b82f6' : 'inset 2px 0 0 transparent',
         transition: 'all 0.2s ease',
         animation: `fadeSlideIn 0.3s ease ${index * 0.03}s both`,
       }}

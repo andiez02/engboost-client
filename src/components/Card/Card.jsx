@@ -2,12 +2,15 @@ import React from 'react';
 import { Typography, IconButton, Box, Fade, alpha } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import VolumeUpOutlinedIcon from '@mui/icons-material/VolumeUpOutlined';
+import { getFlashcardViewModel } from '../../utils/flashcardSelectors';
 
 const Cards = React.memo(({ card, onRemove, isPublic = false }) => {
+  const viewModel = getFlashcardViewModel(card);
+  const { headword, translation, pos, imageUrl } = viewModel || {};
   const handleSpeak = (e) => {
     e.stopPropagation();
-    if (!card.english) return;
-    const utt = new SpeechSynthesisUtterance(card.english);
+    if (!headword) return;
+    const utt = new SpeechSynthesisUtterance(headword);
     utt.lang = 'en-US';
     window.speechSynthesis.speak(utt);
   };
@@ -46,8 +49,8 @@ const Cards = React.memo(({ card, onRemove, isPublic = false }) => {
           }}
         >
           <img
-            src={card.imageUrl}
-            alt={card.object}
+            src={imageUrl}
+            alt={headword}
             style={{ width: '86%', height: '86%', objectFit: 'contain' }}
           />
         </Box>
@@ -83,7 +86,7 @@ const Cards = React.memo(({ card, onRemove, isPublic = false }) => {
                 maxWidth: 64,
               }}
             >
-              {card.object}
+              {pos || '—'}
             </Typography>
           </Box>
         </Box>
@@ -104,7 +107,7 @@ const Cards = React.memo(({ card, onRemove, isPublic = false }) => {
               textOverflow: 'ellipsis',
             }}
           >
-            {card.english}
+            {headword}
           </Typography>
         </Box>
 
@@ -122,7 +125,7 @@ const Cards = React.memo(({ card, onRemove, isPublic = false }) => {
               textOverflow: 'ellipsis',
             }}
           >
-            {card.vietnamese}
+            {translation}
           </Typography>
         </Box>
 

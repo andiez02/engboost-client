@@ -1,7 +1,11 @@
 import { motion } from 'framer-motion';
+import { getFlashcardViewModel } from '../../../utils/flashcardSelectors';
 
 export default function FlashcardBack({ card }) {
   if (!card) return null;
+
+  const viewModel = getFlashcardViewModel(card);
+  const { translation, example } = viewModel || {};
 
   return (
     <motion.div
@@ -17,13 +21,13 @@ export default function FlashcardBack({ card }) {
 
       {/* Meaning — main focus */}
       <p className="text-5xl font-black text-white text-center leading-tight">
-        {card.vietnamese || ''}
+        {translation || ''}
       </p>
 
       {/* Example on back — minimal */}
-      {card.example ? (
+      {example ? (
         <p className="text-sm italic text-white/50 text-center leading-relaxed mt-2 max-w-xs">
-          {card.example}
+          {example}
         </p>
       ) : null}
 
