@@ -1,5 +1,5 @@
 import { Component } from 'react';
-import FlashcardView from './FlashcardView';
+import FlashcardView from './components/cards/FlashcardView';
 
 /**
  * Error Boundary for study mode components

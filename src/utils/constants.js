@@ -22,8 +22,8 @@ export const routes = {
   FLASHCARD: '/flashcard',
   //Dashboard
   MY_COURSE: '/my_course',
-  //Challenges
-  CHALLENGES: '/challenges',
+  //Daily Missions
+  CHALLENGES: '/daily-missions',
   //Setting Account
   SETTINGS_ACCOUNT: '/settings/account',
   //Setting Security

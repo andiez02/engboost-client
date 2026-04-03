@@ -1,8 +1,8 @@
 import { motion } from 'framer-motion';
-import FlashcardView from './FlashcardView';
-import MCQCard from './MCQCard';
-import TypingCard from './TypingCard';
-import ImageCard from './ImageCard';
+import FlashcardView from './components/cards/FlashcardView';
+import MCQCard from './components/cards/MCQCard';
+import TypingCard from './components/cards/TypingCard';
+import ImageCard from './components/cards/ImageCard';
 import StudyModeErrorBoundary from './StudyModeErrorBoundary';
 
 /**
@@ -78,6 +78,7 @@ export default function StudyRenderer({
           <ImageCard
             card={card}
             onAnswer={onAnswer}
+            onSubmit={onTypingSubmit}
             responseTimeMs={responseTimeMs}
             lastRating={lastRating}
             isTransitioning={isTransitioning}

@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { Box, Typography, ButtonBase } from '@mui/material';
-import { fetchDueCards } from '../../../redux/study/studySlice';
-import { formatTimeRemaining } from '../../../utils/formatTimeRemaining';
+import { fetchDueCards } from '../../../../../redux/study/studySlice';
+import { formatTimeRemaining } from '../../../../../utils/formatTimeRemaining';
 
 const VARIANTS = {
   'no-cards': {

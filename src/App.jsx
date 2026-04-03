@@ -25,7 +25,7 @@ import Chatbot from './pages/UserPage/Chatbot/Chatbot.jsx';
 import DiscoverPage from './pages/UserPage/Discover/DiscoverPage.jsx';
 import AdminLayout from './components/Layout/AdminLayout.jsx';
 import StudyPage from './pages/UserPage/Study/StudyPage.jsx';
-import ChallengePage from './pages/UserPage/Challenge/ChallengePage.jsx';
+import DailyMissionsPage from './pages/UserPage/Challenge/ChallengePage.jsx';
 import AdminExploreFolders from './pages/Admin/AdminExploreFolders.jsx';
 
 const ProtectedRoute = ({ user, allowedRoles }) => {
@@ -84,7 +84,7 @@ function App() {
         <Route path={routes.FLASHCARD_EXPLORE} element={<Flashcard />} />
         <Route path={routes.CHATBOT} element={<Chatbot />} />
         <Route path={routes.STUDY} element={<StudyPage />} />
-        <Route path={routes.CHALLENGES} element={<ChallengePage />} />
+        <Route path={routes.CHALLENGES} element={<DailyMissionsPage />} />
         <Route path={routes.DISCOVER} element={<DiscoverPage />} />
         <Route
           path="/my_course/:courseId/video"

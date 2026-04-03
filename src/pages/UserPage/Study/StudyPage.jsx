@@ -3,17 +3,17 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Box, Typography, CircularProgress } from '@mui/material';
 import { flipCard, resetSession } from '../../../redux/study/studySlice';
-import { useStudySession } from './useStudySession';
+import { useStudySession } from './hooks/useStudySession';
 import StudyRenderer from './StudyRenderer';
-import RatingButtons from './RatingButtons';
-import EmptyStudy from './EmptyStudy';
-import StudySidebar from './StudySidebar';
-import StudyHeader from './StudyHeader';
-import LeaveSessionDialog from './LeaveSessionDialog';
+import RatingButtons from './components/ui/RatingButtons';
+import EmptyStudy from './components/layout/EmptyStudy';
+import StudySidebar from './components/layout/StudySidebar';
+import StudyHeader from './components/layout/StudyHeader';
+import LeaveSessionDialog from './components/ui/LeaveSessionDialog';
 import SessionFeedbackModal from '../Flashcard/SessionFeedbackModal';
 import CloseIcon from '@mui/icons-material/Close';
-import { useCombo } from './useCombo';
-import ComboIndicator from './ComboIndicator';
+import { useCombo } from './hooks/useCombo';
+import ComboIndicator from './components/ui/ComboIndicator';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function StudyPage() {

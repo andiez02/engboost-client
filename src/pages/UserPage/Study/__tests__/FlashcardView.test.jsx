@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { configureStore } from '@reduxjs/toolkit';
 import { Provider } from 'react-redux';
 import studyReducer from '../../../../redux/study/studySlice';
-import FlashcardView from '../FlashcardView';
+import FlashcardView from '../components/cards/FlashcardView';
 
 const makeStore = (overrides = {}) =>
   configureStore({

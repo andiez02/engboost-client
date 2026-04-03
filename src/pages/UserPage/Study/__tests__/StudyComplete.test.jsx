@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import * as fc from 'fast-check';
-import { formatDuration } from '../StudyComplete';
+import { formatDuration } from '../components/layout/StudyComplete';
 
 // ── Property 14: Session duration formatting ─────────────────────────────────
 // Feature: study-session-engine, Property 14: formatDuration(s) matches `Xm Ys` pattern

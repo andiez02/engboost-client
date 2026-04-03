@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import FlashcardBack from '../FlashcardBack';
+import FlashcardBack from '../components/cards/FlashcardBack';
 
 const card = {
   id: '1',

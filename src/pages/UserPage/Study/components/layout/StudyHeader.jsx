@@ -1,6 +1,5 @@
-import StudyProgressBar from './StudyProgressBar';
-import XpFloat from './XpFloat';
-import SessionTimer from './SessionTimer';
+import StudyProgressBar from '../../components/ui/StudyProgressBar';
+import XpFloat from '../../components/ui/XpFloat';
 import CloseIcon from '@mui/icons-material/Close';
 
 export default function StudyHeader({ 
@@ -38,7 +37,6 @@ export default function StudyHeader({
 
         {/* Right */}
         <div className="flex items-center gap-3">
-          <SessionTimer seconds={sessionDuration} />
           <XpFloat sessionXp={sessionXp} lastXpEvent={lastXpEvent} />
         </div>
       </div>
@@ -67,9 +65,6 @@ export default function StudyHeader({
             </div>
           ) : <div />}
           <div className="flex items-center gap-2">
-            <div className="scale-[0.85] origin-right">
-              <SessionTimer seconds={sessionDuration} />
-            </div>
             <div className="scale-[0.85] origin-right">
                <XpFloat sessionXp={sessionXp} lastXpEvent={lastXpEvent} />
             </div>

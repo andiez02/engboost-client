@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
 import * as fc from 'fast-check';
-import FlashcardFront from '../FlashcardFront';
+import FlashcardFront from '../components/cards/FlashcardFront';
 
 // ─── Property 1 ──────────────────────────────────────────────────────────────
 // Feature: flashcard-ui-upgrade, Property 1: Image presence matches image_url

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
 import * as fc from 'fast-check';
-import FlashcardBack from '../FlashcardBack';
+import FlashcardBack from '../components/cards/FlashcardBack';
 
 // Feature: flashcard-ui-upgrade, Property 5: FlashcardBack content ordering
 describe('Property 5: FlashcardBack content ordering', () => {

@@ -9,7 +9,7 @@ import {
   selectStudyProgress,
   selectSessionStartTime,
   selectIsTransitioning,
-} from '../../../redux/study/studySlice';
+} from '../../../../redux/study/studySlice';
 
 /**
  * Thin coordinator hook for the study session.

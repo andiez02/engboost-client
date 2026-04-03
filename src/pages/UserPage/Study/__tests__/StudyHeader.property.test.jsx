@@ -4,7 +4,7 @@ import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import * as fc from 'fast-check';
 import studyReducer from '../../../../redux/study/studySlice';
-import StudyHeader from '../StudyHeader';
+import StudyHeader from '../components/layout/StudyHeader';
 
 // Feature: flashcard-ui-upgrade, Property 6: StudyHeader progress format
 
