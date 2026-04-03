@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 @import 'tailwindcss';
 
 @theme {
@@ -45,8 +46,212 @@
   animation: gradient 15s ease infinite;
 }
 
+/* ═══════════════════════════════════════════════════════
+   ENGBOOST VISUAL IDENTITY SYSTEM
+   Design Tokens · Component Classes · Micro-interactions
+═══════════════════════════════════════════════════════ */
+
 :root {
-  font-family: 'Roboto', sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+
+  /* ── Color Tokens ───────────────────────────────────── */
+  --color-primary:        #4F46E5; /* indigo-600 */
+  --color-primary-dark:   #3730A3; /* indigo-800 */
+  --color-primary-light:  #EEF2FF; /* indigo-50  */
+
+  --color-accent-from:    #4F46E5; /* indigo → */
+  --color-accent-via:     #7C3AED; /* purple → */
+  --color-accent-to:      #2563EB; /* blue       */
+
+  --color-success:        #22C55E; /* green-500  */
+  --color-success-bg:     #F0FDF4; /* green-50   */
+  --color-success-border: #86EFAC; /* green-300  */
+
+  --color-error:          #EF4444; /* red-500    */
+  --color-error-bg:       #FEF2F2; /* red-50     */
+  --color-error-border:   #FCA5A5; /* red-300    */
+
+  --color-warning:        #F59E0B; /* amber-500  */
+  --color-warning-bg:     #FFFBEB; /* amber-50   */
+
+  --color-surface:        #F7F7F7;
+  --color-border:         #E5E5E5;
+  --color-border-dark:    #D5D5D5;
+  --color-text:           #4B4B4B;
+  --color-text-sub:       #AFAFAF;
+  --color-white:          #FFFFFF;
+
+  /* Gamification palette */
+  --color-xp:             #FF9600;
+  --color-xp-bg:          #FFF4E5;
+  --color-combo:          #FF4B4B;
+  --color-streak:         #FF9600;
+
+  /* ── Spacing ────────────────────────────────────────── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* ── Radius ─────────────────────────────────────────── */
+  --radius-sm:  12px;
+  --radius-md:  16px;
+  --radius-lg:  24px;
+  --radius-xl:  32px;
+
+  /* ── Shadow ─────────────────────────────────────────── */
+  --shadow-sm:  0 2px 8px rgba(0,0,0,0.06);
+  --shadow-md:  0 4px 16px rgba(0,0,0,0.08);
+  --shadow-lg:  0 8px 32px rgba(0,0,0,0.10);
+  --shadow-xl:  0 16px 48px rgba(0,0,0,0.12);
+
+  /* ── Motion ─────────────────────────────────────────── */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast:   150ms;
+  --duration-normal: 250ms;
+
+  /* ── Height tokens ────────────────────────────────── */
+  --height-header: 60px;
+  --height-footer: 100px;
+}
+
+/* ── Typography Scale ──────────────────────────────────── */
+.eb-h1 {
+  font-size: 3rem;
+  font-weight: 900;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+}
+.eb-h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--color-text);
+}
+.eb-body {
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--color-text);
+}
+.eb-hint {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-text-sub);
+}
+.eb-label {
+  font-size: 0.6875rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-sub);
+}
+
+/* ── Button Components ─────────────────────────────────── */
+.eb-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-6);
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  font-size: 0.9375rem;
+  transition: transform var(--duration-fast) var(--ease-spring),
+              box-shadow var(--duration-fast) ease,
+              filter var(--duration-fast) ease;
+  cursor: pointer;
+  border: none;
+  outline: none;
+}
+.eb-btn:hover   { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.eb-btn:active  { transform: translateY(1px);  box-shadow: var(--shadow-sm); }
+.eb-btn:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 3px; }
+
+.eb-btn-primary {
+  background: linear-gradient(135deg, var(--color-accent-from), var(--color-accent-to));
+  color: white;
+  box-shadow: 0 4px 0 var(--color-primary-dark), var(--shadow-md);
+}
+.eb-btn-primary:active { box-shadow: 0 1px 0 var(--color-primary-dark); }
+
+.eb-btn-secondary {
+  background: var(--color-white);
+  color: var(--color-primary);
+  border: 2px solid var(--color-border);
+  border-bottom: 4px solid var(--color-border-dark);
+  box-shadow: var(--shadow-sm);
+}
+.eb-btn-secondary:active { border-bottom-width: 2px; transform: translateY(2px); }
+
+.eb-btn-ghost {
+  background: transparent;
+  color: var(--color-text-sub);
+}
+.eb-btn-ghost:hover { background: var(--color-surface); color: var(--color-text); }
+
+/* ── Card Component ────────────────────────────────────── */
+.eb-card {
+  background: var(--color-white);
+  border-radius: var(--radius-xl);
+  border: 2px solid var(--color-border);
+  border-bottom: 8px solid var(--color-border-dark);
+  box-shadow: var(--shadow-md);
+  transition: transform var(--duration-normal) var(--ease-spring);
+}
+.eb-card-glass {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: var(--radius-xl);
+  border: 1px solid rgba(255,255,255,0.4);
+  box-shadow: var(--shadow-xl);
+}
+
+/* ── Badge / Pill ──────────────────────────────────────── */
+.eb-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  border: 2px solid transparent;
+}
+.eb-badge-success { background: var(--color-success-bg);  color: var(--color-success);  border-color: var(--color-success-border); }
+.eb-badge-error   { background: var(--color-error-bg);    color: var(--color-error);    border-color: var(--color-error-border); }
+.eb-badge-xp      { background: var(--color-xp-bg);       color: var(--color-xp);       border-color: #FFD8A8; }
+
+/* ── Micro-interactions ────────────────────────────────── */
+.eb-hover-lift {
+  transition: transform var(--duration-fast) var(--ease-spring),
+              box-shadow var(--duration-fast) ease;
+}
+.eb-hover-lift:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+.eb-hover-lift:active { transform: translateY(0); }
+
+.eb-tap-scale {
+  transition: transform var(--duration-fast) var(--ease-spring);
+}
+.eb-tap-scale:active { transform: scale(0.95); }
+
+/* ── Focus Ring ────────────────────────────────────────── */
+.eb-focus-ring:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+/* ── Gradient accent text ──────────────────────────────── */
+.eb-gradient-text {
+  background: linear-gradient(135deg, var(--color-accent-from), var(--color-accent-via), var(--color-accent-to));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 /* Modern scrollbar styling */

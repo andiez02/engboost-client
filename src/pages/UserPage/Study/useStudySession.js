@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useState } from 'react';
+import { useEffect, useCallback, useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   fetchDueCards,
@@ -39,6 +39,17 @@ export function useStudySession(folderId) {
   // ── Session timer ────────────────────────────────────────────────────────
   const [sessionDuration, setSessionDuration] = useState(0);
 
+  // Track when the current card was first shown (for response time logging)
+  const cardShownAtRef = useRef(Date.now());
+  const [responseTimeMs, setResponseTimeMs] = useState(null);
+  const [lastRatingObj, setLastRatingObj] = useState({ cardId: null, rating: null });
+  
+  const currentCardId = currentCard?.id;
+  useEffect(() => {
+    cardShownAtRef.current = Date.now();
+    setResponseTimeMs(null);
+  }, [currentCardId]);
+
   useEffect(() => {
     if (!sessionStartTime || sessionDone) {
       setSessionDuration(
@@ -70,11 +81,14 @@ export function useStudySession(folderId) {
   const handleAnswer = useCallback(
     (rating) => {
       if (!currentCard || isSubmitting || isTransitioning) return;
+      const responseTime = Date.now() - cardShownAtRef.current;
+      setResponseTimeMs(responseTime);
+      setLastRatingObj({ cardId: currentCard.id, rating });
       // Reinsert before submitReview so queue is ready when advanceCard fires
       if (rating === 0) {
         dispatch(reinsertCard({ cardId: currentCard.id, card: currentCard }));
       }
-      dispatch(submitReview({ cardId: currentCard.id, rating }));
+      dispatch(submitReview({ cardId: currentCard.id, rating, responseTimeMs: responseTime }));
     },
     [currentCard, isSubmitting, isTransitioning, dispatch]
   );
@@ -82,10 +96,13 @@ export function useStudySession(folderId) {
   // ── Derived values ───────────────────────────────────────────────────────
   const { currentIndex, total, remaining } = progress;
   const progressPct = total > 0 ? currentIndex / total : 0;
+  const nextCard = useSelector((s) => s.study.queue[s.study.currentIndex + 1] ?? null);
+  const lastRating = lastRatingObj.cardId === currentCard?.id ? lastRatingObj.rating : null;
 
   return {
     // Card
     currentCard,
+    nextCard,
     currentIndex,
     total,
     progress: progressPct,
@@ -105,6 +122,9 @@ export function useStudySession(folderId) {
     reviewedToday: stats?.reviewedToday ?? 0,
     queueLength,
     nextReviewAt,
+    // Response time tracking
+    responseTimeMs,
+    lastRating,
     // Actions
     handleAnswer,
   };

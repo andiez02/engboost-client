@@ -20,11 +20,13 @@ export const fetchDueCards = createAsyncThunk(
 
 export const submitReview = createAsyncThunk(
   'study/submitReview',
-  async ({ cardId, rating }, { dispatch, rejectWithValue }) => {
+  async ({ cardId, rating, responseTimeMs }, { dispatch, rejectWithValue }) => {
     try {
-      const res = await studyService.reviewCard({ cardId, rating });
-      // Advance the card after 300ms so the UI can animate the transition
-      setTimeout(() => dispatch(advanceCard()), 300);
+      const res = await studyService.reviewCard({ cardId, rating, responseTimeMs });
+      // Delay for smooth swipe game flow
+      setTimeout(() => {
+        dispatch(advanceCard());
+      }, 120);
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data || 'Failed to submit review');

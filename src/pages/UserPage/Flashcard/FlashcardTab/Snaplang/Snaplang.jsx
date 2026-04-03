@@ -25,7 +25,7 @@ import GenerateDeck from '../Discover/GenerateDeck';
 import PhotoCameraOutlinedIcon from '@mui/icons-material/PhotoCameraOutlined';
 import AutoAwesomeOutlinedIcon from '@mui/icons-material/AutoAwesomeOutlined';
 import FloatingNotification from '../../../../../components/Feedback/FloatingNotification';
-import useFloatingNotification from '../../../../../hooks/useFloatingNotification';
+// import useFloatingNotification from '../../../../../hooks/useFloatingNotification';
 
 const CREATE_STREAK_DAYS_KEY = 'engboost_createflashcards_streak_days';
 const CREATE_STREAK_LAST_DATE_KEY = 'engboost_createflashcards_last_date';
@@ -104,15 +104,6 @@ function Snaplang() {
   const searchParams = new URLSearchParams(location.search);
   const initialMode = searchParams.get('mode') === 'ai' ? 'ai' : 'upload';
   const [mode, setMode] = useState(initialMode);
-
-  const reviewedToday = useSelector((state) => state.study.stats?.reviewedToday ?? 0);
-  const { notification, showNotification, hideNotification } = useFloatingNotification();
-
-  const [streakDays, setStreakDays] = useState(() => {
-    if (typeof window === 'undefined') return 1;
-    const raw = Number(localStorage.getItem(CREATE_STREAK_DAYS_KEY));
-    return Number.isFinite(raw) && raw > 0 ? raw : 1;
-  });
 
   const [rewardData, setRewardData] = useState(null);
   const autoStudyAfterSaveRef = useRef(false);
@@ -426,24 +417,24 @@ function Snaplang() {
     });
   }, []);
 
-  useEffect(() => {
-    if (!rewardData?.count) return;
+  // useEffect(() => {
+  //   if (!rewardData?.count) return;
 
-    showNotification({
-      title: `🎉 Bạn đã tạo ${rewardData.count} từ mới!`,
-      message: 'Tuyệt vời! Bắt đầu học ngay để thẻ vào đúng nhịp.',
-      badgeText: '🆕 Từ mới',
-      metaText: rewardData.xp > 0 ? `✨ +${rewardData.xp} XP` : null,
-      durationMs: 8000,
-    });
-  }, [rewardData, showNotification]);
+  //   showNotification({
+  //     title: `🎉 Bạn đã tạo ${rewardData.count} từ mới!`,
+  //     message: 'Tuyệt vời! Bắt đầu học ngay để thẻ vào đúng nhịp.',
+  //     badgeText: '🆕 Từ mới',
+  //     metaText: rewardData.xp > 0 ? `✨ +${rewardData.xp} XP` : null,
+  //     durationMs: 8000,
+  //   });
+  // }, [rewardData, showNotification]);
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      <FloatingNotification
+      {/* <FloatingNotification
         notification={notification}
         onClose={hideNotification}
-      />
+      /> */}
 
       {/* Header */}
       <Box sx={{ mb: 4, display: 'flex', flexDirection: 'column', gap: 2 }}>

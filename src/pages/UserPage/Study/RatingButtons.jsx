@@ -4,9 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const RATINGS = [
   { label: 'Again', value: 0, key: '1', emoji: '\u274C', bg: '#FEF2F2', color: '#DC2626', border: '#FECACA', shadow: 'rgba(220,38,38,0.25)', xp: 1 },
-  { label: 'Hard',  value: 1, key: '2', emoji: '\uD83D\uDE2C', bg: '#FFFBEB', color: '#D97706', border: '#FDE68A', shadow: 'rgba(217,119,6,0.25)',  xp: 2 },
-  { label: 'Good',  value: 2, key: '3', emoji: '\uD83D\uDE42', bg: '#F0FDF4', color: '#16A34A', border: '#BBF7D0', shadow: 'rgba(22,163,74,0.25)',  xp: 3 },
-  { label: 'Easy',  value: 3, key: '4', emoji: '\uD83D\uDE0E', bg: '#EFF6FF', color: '#2563EB', border: '#BFDBFE', shadow: 'rgba(37,99,235,0.25)', xp: 5 },
+  { label: 'Hard',  value: 1, key: '2', emoji: '\uD83D\uDE2C', bg: '#FFFBEB', color: '#D97706', border: '#FDE68A', shadow: 'rgba(217,119,6,0.25)',  xp: 3 },
+  { label: 'Good',  value: 2, key: '3', emoji: '\uD83D\uDE42', bg: '#F0FDF4', color: '#16A34A', border: '#BBF7D0', shadow: 'rgba(22,163,74,0.25)',  xp: 5 },
+  { label: 'Easy',  value: 3, key: '4', emoji: '\uD83D\uDE0E', bg: '#EFF6FF', color: '#2563EB', border: '#BFDBFE', shadow: 'rgba(37,99,235,0.25)', xp: 8 },
 ];
 
 const FEEDBACK = [
@@ -30,9 +30,8 @@ function FloatingToasts({ xpItems, feedbackItems }) {
           <motion.span
             key={id}
             initial={{ opacity: 1, y: 0, scale: 1 }}
-            animate={{ opacity: 0, y: -70, scale: 1.2 }}
-            exit={{}}
-            transition={{ duration: 1.4, ease: 'easeOut' }}
+            animate={{ opacity: 0, y: -20, scale: 1.2 }}
+            transition={{ duration: 0.6, ease: 'easeOut' }}
             style={{
               position: 'fixed',
               left: x,
@@ -53,34 +52,45 @@ function FloatingToasts({ xpItems, feedbackItems }) {
       </AnimatePresence>
 
       <AnimatePresence>
-        {feedbackItems.map(({ id, text, x, y }) => (
-          <motion.div
-            key={id}
-            initial={{ opacity: 0, y: 4, scale: 0.88 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.92 }}
-            transition={{ duration: 0.22 }}
-            style={{
-              position: 'fixed',
-              left: x,
-              top: y - 48,
-              transform: 'translateX(-50%)',
-              pointerEvents: 'none',
-              zIndex: 9998,
-              whiteSpace: 'nowrap',
-            }}
-            className="text-sm font-bold text-gray-700 bg-white px-4 py-1.5 rounded-full shadow-lg border border-gray-100"
-          >
-            {text}
-          </motion.div>
-        ))}
+        {feedbackItems.map(({ id, text, rating, x, y }) => {
+          const isCorrect = rating !== undefined ? rating >= 2 : true;
+          return (
+            <motion.div
+              key={id}
+              initial={{ opacity: 0, y: 0, scale: 0.9 }}
+              animate={
+                isCorrect
+                  ? { opacity: 1, y: -20, scale: 1.1 }
+                  : { opacity: 1, y: -20, x: [-2, 4, -4, 4, 0], scale: 1 }
+              }
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.6 }}
+              style={{
+                position: 'fixed',
+                left: x,
+                top: y - 48,
+                transform: 'translateX(-50%)',
+                pointerEvents: 'none',
+                zIndex: 9998,
+                whiteSpace: 'nowrap',
+              }}
+              className={`text-base font-black px-4 py-1.5 rounded-full shadow-lg border-2 ${
+                isCorrect
+                  ? 'text-[#16A34A] bg-[#F0FDF4] border-[#BBF7D0]'
+                  : 'text-[#DC2626] bg-[#FEF2F2] border-[#FECACA]'
+              }`}
+            >
+              {text}
+            </motion.div>
+          );
+        })}
       </AnimatePresence>
     </>,
     document.body
   );
 }
 
-export default function RatingButtons({ onRate, disabled }) {
+export default function RatingButtons({ onRate, disabled, combo = 0 }) {
   const [xpFloats, setXpFloats] = useState([]);
   const [feedbackFloats, setFeedbackFloats] = useState([]);
 
@@ -90,18 +100,20 @@ export default function RatingButtons({ onRate, disabled }) {
     const rect = e.currentTarget.getBoundingClientRect();
     const x = rect.left + rect.width / 2;
     const y = rect.top;
-    const { xp } = RATINGS[value];
+    
+    const baseXp = RATINGS[value].xp;
+    const earnedXp = value >= 2 ? Math.floor(baseXp * (1 + combo * 0.1)) : baseXp;
     const id = Date.now();
 
-    // XP float — stays 1.6s
-    setXpFloats((prev) => [...prev, { id, xp, x, y }]);
-    setTimeout(() => setXpFloats((prev) => prev.filter((f) => f.id !== id)), 1600);
+    // XP float — stays 600ms
+    setXpFloats((prev) => [...prev, { id, xp: earnedXp, x, y }]);
+    setTimeout(() => setXpFloats((prev) => prev.filter((f) => f.id !== id)), 600);
 
-    // Feedback toast — stays 2s
+    // Feedback toast — stays 600ms
     const text = getFeedback(value);
     const fid = id + 1;
-    setFeedbackFloats((prev) => [...prev, { id: fid, text, x, y }]);
-    setTimeout(() => setFeedbackFloats((prev) => prev.filter((f) => f.id !== fid)), 2000);
+    setFeedbackFloats((prev) => [...prev, { id: fid, text, rating: value, x, y }]);
+    setTimeout(() => setFeedbackFloats((prev) => prev.filter((f) => f.id !== fid)), 600);
 
     onRate(value);
   };
@@ -137,7 +149,6 @@ export default function RatingButtons({ onRate, disabled }) {
             >
               <span className="text-xl leading-none">{emoji}</span>
               <span className="text-xs font-black">{label}</span>
-              <span className="text-[10px] opacity-40 font-mono">[{key}]</span>
             </motion.button>
           ))}
         </div>

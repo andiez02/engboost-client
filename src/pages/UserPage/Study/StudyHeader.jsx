@@ -1,42 +1,79 @@
-import { useSelector } from 'react-redux';
-import { motion } from 'framer-motion';
+import StudyProgressBar from './StudyProgressBar';
+import XpFloat from './XpFloat';
+import SessionTimer from './SessionTimer';
 import CloseIcon from '@mui/icons-material/Close';
-import { selectStudyProgress } from '../../../redux/study/studySlice';
 
-export default function StudyHeader({ onLeave }) {
-  const progress = useSelector(selectStudyProgress);
-  const current = Math.min(progress.current, progress.total);
-  const total = progress.total;
-  const pct = total > 0 ? Math.round((current / total) * 100) : 0;
-
+export default function StudyHeader({ 
+  streak,
+  sessionXp,
+  lastXpEvent,
+  progress, 
+  sessionDuration, 
+  onLeave 
+}) {
   return (
-    <div className="w-full flex flex-col gap-3">
-      {/* top row */}
-      <div className="flex items-center justify-between gap-3">
-        <button
-          onClick={onLeave}
-          aria-label="leave session"
-          className="w-9 h-9 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-all"
-        >
-          <CloseIcon fontSize="small" />
-        </button>
-
-        {/* progress bar */}
-        <div className="flex-1 h-4 bg-gray-100 rounded-full overflow-hidden">
-          <motion.div
-            className="h-full rounded-full"
-            style={{ background: 'linear-gradient(90deg, #4F46E5, #7C3AED)' }}
-            initial={{ width: 0 }}
-            animate={{ width: `${pct}%` }}
-            transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
-          />
+    <div className="w-full">
+      {/* Desktop Layout */ }
+      <div className="hidden md:grid grid-cols-[auto_1fr_auto] items-center gap-6 bg-white p-4 rounded-[24px] border-2 border-[#E5E5E5] border-b-[6px] mb-2 shadow-sm">
+        {/* Left */}
+        <div className="flex items-center gap-4">
+          <button
+            onClick={onLeave}
+            className="group flex flex-shrink-0 items-center justify-center text-[#AFAFAF] hover:text-[#4B4B4B] transition-all p-2 bg-transparent hover:bg-[#F7F7F7] rounded-2xl border-2 border-transparent hover:border-[#E5E5E5] hover:border-b-[4px] active:border-b-2 active:translate-y-[2px]"
+          >
+            <CloseIcon className="w-6 h-6" />
+          </button>
+          {streak > 0 && (
+            <div className="flex items-center gap-1.5 font-black text-[#FF9600] px-3 py-1.5 rounded-xl border-2 border-[#FFD8A8] bg-[#FFF4E5] shadow-sm">
+              <span className="text-xl">🔥</span>
+              <span className="text-lg tabular-nums leading-none mb-[2px]">{streak}</span>
+            </div>
+          )}
         </div>
 
-        {/* counter */}
-        <div className="shrink-0">
-          <span className="text-sm font-bold text-indigo-600 tabular-nums">
-            {current} / {total}
-          </span>
+        {/* Middle */}
+        <div className="flex w-full overflow-hidden px-4">
+          <StudyProgressBar progress={progress} />
+        </div>
+
+        {/* Right */}
+        <div className="flex items-center gap-3">
+          <SessionTimer seconds={sessionDuration} />
+          <XpFloat sessionXp={sessionXp} lastXpEvent={lastXpEvent} />
+        </div>
+      </div>
+
+      {/* Mobile Layout */}
+      <div className="flex md:hidden flex-col gap-3 bg-white p-4 rounded-3xl border-2 border-[#E5E5E5] border-b-[6px] mb-2 shadow-sm w-full">
+        {/* Top: Progress with Close button */}
+        <div className="flex items-center gap-3 w-full">
+          <button
+            onClick={onLeave}
+            className="group flex flex-shrink-0 items-center justify-center text-[#AFAFAF] active:text-[#4B4B4B] transition-all p-1.5 bg-transparent rounded-xl border-2 border-transparent active:border-[#E5E5E5] active:border-b-[3px] active:translate-y-[1px]"
+          >
+            <CloseIcon className="w-5 h-5" />
+          </button>
+          <div className="flex-1 w-full flex items-center pr-1">
+             <StudyProgressBar progress={progress} />
+          </div>
+        </div>
+
+        {/* Bottom: Streak + Timer + XP */}
+        <div className="flex items-center justify-between w-full mt-1">
+          {streak > 0 ? (
+            <div className="flex items-center gap-1 font-black text-[#FF9600] px-2.5 py-1 rounded-xl border-2 border-[#FFD8A8] bg-[#FFF4E5]">
+              <span className="text-lg">🔥</span>
+              <span className="text-[15px] tabular-nums leading-none mb-[1px]">{streak}</span>
+            </div>
+          ) : <div />}
+          <div className="flex items-center gap-2">
+            <div className="scale-[0.85] origin-right">
+              <SessionTimer seconds={sessionDuration} />
+            </div>
+            <div className="scale-[0.85] origin-right">
+               <XpFloat sessionXp={sessionXp} lastXpEvent={lastXpEvent} />
+            </div>
+          </div>
         </div>
       </div>
     </div>
