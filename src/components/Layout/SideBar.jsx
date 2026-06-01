@@ -4,6 +4,8 @@ import {
   Home,
   Swords,
   Compass,
+  Trophy,
+  Bot,
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
@@ -16,6 +18,8 @@ const dashboardItems = [
   { name: 'Flashcard', icon: BookOpen, path: routes.FLASHCARD },
   { name: 'Discover', icon: Compass, path: routes.DISCOVER },
   { name: 'Daily Missions', icon: Swords, path: routes.CHALLENGES },
+  { name: 'Leaderboard', icon: Trophy, path: routes.LEADERBOARD },
+  { name: 'AI Tutor', icon: Bot, path: routes.CHATBOT },
 ];
 
 export default function Sidebar({ isOpen, setIsOpen }) {

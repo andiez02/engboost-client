@@ -2,9 +2,10 @@ import { Box, Typography, Chip, Button, CircularProgress } from '@mui/material';
 import LockIcon from '@mui/icons-material/Lock';
 import StyleIcon from '@mui/icons-material/Style';
 import AddIcon from '@mui/icons-material/Add';
+import CheckIcon from '@mui/icons-material/Check';
 import { gamify, btn3d } from '../../../../../theme';
 
-export default function ExploreFolderCard({ folder, onClone, isCloning, userLevel }) {
+export default function ExploreFolderCard({ folder, onClone, isCloning, userLevel, isCloned }) {
   const requiredLevel = Number(folder.required_level ?? 1);
   const locked = userLevel < requiredLevel;
 
@@ -79,16 +80,28 @@ export default function ExploreFolderCard({ folder, onClone, isCloning, userLeve
       />
 
       {/* Action button */}
-      <Button
-        variant="contained"
-        size="small"
-        startIcon={isCloning ? <CircularProgress size={14} color="inherit" /> : <AddIcon />}
-        onClick={() => onClone(folder.id)}
-        disabled={locked || isCloning}
-        sx={{ ...btn3d(gamify.green, gamify.greenDark), mt: 'auto', fontSize: '0.78rem' }}
-      >
-        {isCloning ? 'Adding...' : 'Add to My Folders'}
-      </Button>
+      {isCloned ? (
+        <Button
+          variant="contained"
+          size="small"
+          startIcon={<CheckIcon />}
+          disabled
+          sx={{ ...btn3d(gamify.gray, gamify.grayDark), mt: 'auto', fontSize: '0.78rem', color: `${gamify.sub} !important` }}
+        >
+          Đã thêm
+        </Button>
+      ) : (
+        <Button
+          variant="contained"
+          size="small"
+          startIcon={isCloning ? <CircularProgress size={14} color="inherit" /> : <AddIcon />}
+          onClick={() => onClone(folder.id)}
+          disabled={locked || isCloning}
+          sx={{ ...btn3d(gamify.green, gamify.greenDark), mt: 'auto', fontSize: '0.78rem' }}
+        >
+          {isCloning ? 'Adding...' : 'Add to My Folders'}
+        </Button>
+      )}
     </Box>
   );
 }

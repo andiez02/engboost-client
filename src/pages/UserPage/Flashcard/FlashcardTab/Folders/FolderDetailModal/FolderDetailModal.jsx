@@ -33,16 +33,19 @@ import {
   AutoStoriesOutlined,
 } from '@mui/icons-material';
 import ShareIcon from '@mui/icons-material/Share';
+import LocalOfferOutlinedIcon from '@mui/icons-material/LocalOfferOutlined';
 import { routes } from '../../../../../../utils/constants';
 import {
   getFlashcardsByFolderAPI,
   deleteFlashcardAPI,
+  updateFolderAPI,
 } from '../../../../../../apis';
 import FlashcardCard from '../../../../../../components/Flashcard/FlashcardCard';
-import { updateFlashcardCount } from '../../../../../../redux/folder/folderSlice';
+import { updateFlashcardCount, updateFolder } from '../../../../../../redux/folder/folderSlice';
 import ShareModal from '../../../../../../components/Post/ShareModal';
 import { gamify as t, btn3d } from '../../../../../../theme';
 import { getFlashcardViewModel } from '../../../../../../utils/flashcardSelectors';
+import TagEditor, { TagChip } from '../../../../../../components/Folder/TagEditor';
 
 /* ─── Shared speak helper ───────────────────────────────────────────────── */
 function safeSpeak(text) {
@@ -119,7 +122,10 @@ const CardDetailPanel = memo(function CardDetailPanel({ card, cards, onClose, on
         {/* Panel header */}
         <Box sx={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          px: 2.5, py: 1.5, borderBottom: `4px solid ${t.grayDark}`, flexShrink: 0,
+          px: 2.5, py: 1.5,
+          borderBottom: `2px solid ${t.gray}`,
+          boxShadow: `0 2px 0 ${t.grayDark}`,
+          flexShrink: 0,
           bgcolor: '#fff',
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -250,8 +256,11 @@ const CardDetailPanel = memo(function CardDetailPanel({ card, cards, onClose, on
                   sx={{
                     width: 38, height: 38, borderRadius: 2,
                     color: t.sub, bgcolor: '#fff',
-                    border: `1px solid ${t.grayDark}`,
-                    '&:hover': { bgcolor: t.surface, color: t.text },
+                    border: `2px solid ${t.gray}`,
+                    borderBottom: `4px solid ${t.grayDark}`,
+                    transition: 'all 0.1s ease',
+                    '&:hover': { bgcolor: t.blueBg, color: t.blue, borderColor: t.blue, borderBottomColor: t.blueDark },
+                    '&:active': { transform: 'translateY(2px)', borderBottomWidth: '2px' },
                   }}>
                   <VolumeUpOutlined sx={{ fontSize: 20 }} />
                 </IconButton>
@@ -474,12 +483,13 @@ const CardListItem = memo(({ card, isActive, onCardClick, onRemove, index }) => 
   return (
     <div
       style={{
-        background: isActive ? 'rgba(59,130,246,0.07)' : '#fff',
-        borderRadius: 8,
-        border: isActive ? '1px solid rgba(59,130,246,0.35)' : '1px solid rgba(148,163,184,0.22)',
-        boxShadow: isActive ? 'inset 2px 0 0 #3b82f6' : 'inset 2px 0 0 transparent',
-        transition: 'all 0.2s ease',
+        background: isActive ? t.blueBg : '#fff',
+        borderRadius: 18,
+        border: isActive ? `2px solid ${t.blue}` : `2px solid ${t.gray}`,
+        borderBottom: isActive ? `4px solid ${t.blueDark}` : `4px solid ${t.grayDark}`,
+        transition: 'all 0.15s ease',
         animation: `fadeSlideIn 0.3s ease ${index * 0.03}s both`,
+        cursor: 'pointer',
       }}
     >
       <FlashcardCard
@@ -511,6 +521,9 @@ const FolderDetailModal = ({
   const [editMode, setEditMode] = useState(false);
   const [folderTitle, setFolderTitle] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [tagDialogOpen, setTagDialogOpen] = useState(false);
+  const [pendingTags, setPendingTags] = useState([]);
+  const [savingTags, setSavingTags] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [flashcards, setFlashcards] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -602,6 +615,31 @@ const FolderDetailModal = ({
     }
   }, [selectedFolder, dispatch, onFlashcardChange]);
 
+  const handleOpenTagDialog = useCallback(() => {
+    setPendingTags(selectedFolder?.tags ?? []);
+    setTagDialogOpen(true);
+    setAnchorEl(null);
+  }, [selectedFolder]);
+
+  const handleSaveTags = useCallback(async () => {
+    const folderId = selectedFolder?.id || selectedFolder?._id;
+    if (!folderId) return;
+    setSavingTags(true);
+    try {
+      const response = await updateFolderAPI(folderId, { tags: pendingTags });
+      if (response?.data || response?.folder) {
+        const updated = response.data || response.folder;
+        setSelectedFolder((prev) => ({ ...prev, tags: pendingTags, ...updated }));
+        dispatch(updateFolder({ ...(selectedFolder), tags: pendingTags }));
+      }
+      setTagDialogOpen(false);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSavingTags(false);
+    }
+  }, [selectedFolder, pendingTags, dispatch]);
+
   const handleCreateFlashcard = useCallback(() => {
     onClose();
     navigate(routes.FLASHCARD_SNAPLANG);
@@ -632,8 +670,10 @@ const FolderDetailModal = ({
         justifyContent: 'space-between',
         alignItems: 'center',
         px: 2.5,
-        py: 1.8,
+        py: 1.5,
         borderBottom: `2px solid ${t.gray}`,
+        borderBottomWidth: '2px',
+        boxShadow: `0 2px 0 ${t.grayDark}`,
         bgcolor: '#fff',
       }}
     >
@@ -641,6 +681,7 @@ const FolderDetailModal = ({
         <Avatar sx={{
           bgcolor: t.blueBg, color: t.blue, width: 38, height: 38,
           border: `2px solid ${t.blue}`,
+          borderBottom: `3px solid ${t.blueDark}`,
           transition: 'transform 0.2s ease',
         }}>
           <FolderOutlined fontSize="small" />
@@ -694,8 +735,9 @@ const FolderDetailModal = ({
         justifyContent: 'space-between',
         alignItems: 'center',
         px: 2.5,
-        py: 1.8,
+        py: 1.5,
         borderBottom: `2px solid ${t.gray}`,
+        boxShadow: `0 2px 0 ${t.grayDark}`,
         bgcolor: '#fff',
       }}
     >
@@ -716,6 +758,13 @@ const FolderDetailModal = ({
             </Typography>
             <CountBadge count={selectedFolder.flashcard_count} />
           </Box>
+          {selectedFolder.tags?.length > 0 && (
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
+              {selectedFolder.tags.map((tag) => (
+                <TagChip key={tag} tag={tag} size="sm" />
+              ))}
+            </Box>
+          )}
         </Box>
       </Box>
 
@@ -823,7 +872,11 @@ const FolderDetailModal = ({
             ) : flashcards.length === 0 ? (
               <EmptyState onCreate={handleCreateFlashcard} />
             ) : (
-              <div className={selectedCard ? 'grid grid-cols-1 gap-1' : 'grid grid-cols-2 gap-1'}>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: selectedCard ? '1fr' : 'repeat(2, 1fr)',
+                gap: 6,
+              }}>
                 {flashcards.map((card, index) => {
                   const id = card.id || card._id;
                   const isActive = (selectedCard?.id || selectedCard?._id) === id;
@@ -874,16 +927,17 @@ const FolderDetailModal = ({
       >
         <MenuItem
           onClick={() => { setEditMode(true); setAnchorEl(null); }}
-          sx={{
-            borderRadius: 2, px: 1.5, py: 1, gap: 1.2,
-            transition: 'all 0.15s ease',
-            '&:hover': { bgcolor: t.blueBg },
-          }}
+          sx={{ borderRadius: 2, px: 1.5, py: 1, gap: 1.2, transition: 'all 0.15s ease', '&:hover': { bgcolor: t.blueBg } }}
         >
           <Edit fontSize="small" sx={{ color: t.blue, fontSize: 16 }} />
-          <Typography sx={{ fontSize: '0.85rem', fontWeight: 900, color: t.text }}>
-            Đổi tên
-          </Typography>
+          <Typography sx={{ fontSize: '0.85rem', fontWeight: 900, color: t.text }}>Đổi tên</Typography>
+        </MenuItem>
+        <MenuItem
+          onClick={handleOpenTagDialog}
+          sx={{ borderRadius: 2, px: 1.5, py: 1, gap: 1.2, transition: 'all 0.15s ease', '&:hover': { bgcolor: '#F6E5FF' } }}
+        >
+          <LocalOfferOutlinedIcon fontSize="small" sx={{ color: '#CE82FF', fontSize: 16 }} />
+          <Typography sx={{ fontSize: '0.85rem', fontWeight: 900, color: t.text }}>Gắn nhãn</Typography>
         </MenuItem>
         <Divider sx={{ my: '4px', borderColor: t.gray }} />
         <MenuItem
@@ -907,6 +961,51 @@ const FolderDetailModal = ({
         onClose={() => setShareOpen(false)}
         folder={selectedFolder}
       />
+
+      {/* ── Tag Dialog ───────────────────────────────────────────────────── */}
+      <Dialog
+        open={tagDialogOpen}
+        onClose={() => setTagDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 4, border: `2px solid ${t.gray}`,
+            borderBottom: `4px solid ${t.grayDark}`,
+            boxShadow: '0 20px 60px rgba(0,0,0,0.12)',
+          },
+        }}
+      >
+        <Box sx={{ p: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+            <LocalOfferOutlinedIcon sx={{ color: '#CE82FF', fontSize: 20 }} />
+            <Typography sx={{ fontWeight: 900, fontSize: '1rem', color: t.text }}>
+              Gắn nhãn thư mục
+            </Typography>
+          </Box>
+          <TagEditor
+            tags={pendingTags}
+            onChange={setPendingTags}
+            allTags={[]}
+          />
+          <Stack direction="row" spacing={1.5} sx={{ mt: 3 }}>
+            <Button onClick={() => setTagDialogOpen(false)} variant="outlined" fullWidth disableElevation
+              sx={{
+                borderRadius: 3, textTransform: 'uppercase', fontWeight: 900, py: 1.2,
+                borderColor: t.gray, borderWidth: 2,
+                borderBottom: `4px solid ${t.grayDark}`, color: t.sub,
+                '&:active': { borderBottomWidth: 0, transform: 'translateY(4px)' },
+              }}>
+              Hủy
+            </Button>
+            <Button onClick={handleSaveTags} variant="contained" fullWidth disableElevation
+              disabled={savingTags}
+              sx={{ ...btn3d('#CE82FF', '#A568CC'), py: 1.2 }}>
+              {savingTags ? <CircularProgress size={14} color="inherit" /> : 'Lưu nhãn'}
+            </Button>
+          </Stack>
+        </Box>
+      </Dialog>
 
       {/* ── Delete confirmation ───────────────────────────────────────────── */}
       <Dialog

@@ -3,12 +3,15 @@ import { postService } from '../../services/post/post.service';
 
 export const fetchPosts = createAsyncThunk(
   'posts/fetchPosts',
-  async ({ limit = 10, cursor } = {}, { rejectWithValue }) => {
+  async ({ limit = 10, cursor, sort, tag, offset } = {}, { rejectWithValue }) => {
     try {
       const params = { limit };
       if (cursor) params.cursor = cursor;
+      if (sort) params.sort = sort;
+      if (tag) params.tag = tag;
+      if (typeof offset === 'number') params.offset = offset;
       const response = await postService.getPosts(params);
-      return response; // { success, data: [], nextCursor }
+      return response; // { success, data: [], nextCursor, nextOffset }
     } catch (error) {
       return rejectWithValue(error.response?.data || 'Failed to fetch posts');
     }
@@ -80,6 +83,7 @@ const postSlice = createSlice({
   initialState: {
     posts: [],
     nextCursor: null,
+    nextOffset: null,
     hasMore: true,
     loading: false,
     loadingMore: false,
@@ -105,6 +109,7 @@ const postSlice = createSlice({
     resetFeed: (state) => {
       state.posts = [];
       state.nextCursor = null;
+      state.nextOffset = null;
       state.hasMore = true;
       state.error = null;
     },
@@ -113,7 +118,12 @@ const postSlice = createSlice({
     builder
       // fetchPosts (initial load)
       .addCase(fetchPosts.pending, (state, action) => {
-        if (!action.meta.arg?.cursor) {
+        const arg = action.meta.arg || {};
+        const isLoadMore = !!(
+          arg.cursor ||
+          (typeof arg.offset === 'number' && arg.offset > 0)
+        );
+        if (!isLoadMore) {
           state.loading = true;
         } else {
           state.loadingMore = true;
@@ -123,14 +133,21 @@ const postSlice = createSlice({
       .addCase(fetchPosts.fulfilled, (state, action) => {
         state.loading = false;
         state.loadingMore = false;
-        const { data, nextCursor } = action.payload;
-        if (!action.meta.arg?.cursor) {
+        const { data, nextCursor, nextOffset } = action.payload;
+        const arg = action.meta.arg || {};
+        const isLoadMore = !!(
+          arg.cursor ||
+          (typeof arg.offset === 'number' && arg.offset > 0)
+        );
+        if (!isLoadMore) {
           state.posts = data;
         } else {
           state.posts = [...state.posts, ...data];
         }
-        state.nextCursor = nextCursor;
-        state.hasMore = !!nextCursor;
+        state.nextCursor = nextCursor ?? null;
+        state.nextOffset = nextOffset ?? null;
+        const isTrending = arg.sort === 'trending';
+        state.hasMore = isTrending ? nextOffset != null : !!nextCursor;
       })
       .addCase(fetchPosts.rejected, (state, action) => {
         state.loading = false;

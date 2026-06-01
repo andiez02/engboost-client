@@ -1,6 +1,7 @@
 import { Box, Typography, Modal } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { tokens } from '../../../theme';
+import ShareButton from '../../../components/Gamification/ShareButton';
 
 /**
  * Popup shown when a new achievement is unlocked.
@@ -107,6 +108,10 @@ export default function BadgeUnlockPopup({ open, badge, onClose }) {
               >
                 {badge.description}
               </Typography>
+
+              <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1.5 }}>
+                <ShareButton message={`🔥 Tôi vừa mở khóa thành tích "${badge.title}" trên EngBoost!`} />
+              </Box>
 
               <Box
                 component="button"

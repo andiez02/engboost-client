@@ -9,6 +9,7 @@ import challengeReducer from "./challenge/challengeSlice";
 import postReducer from "./post/postSlice";
 import exploreReducer from "./explore/exploreSlice";
 import achievementReducer from "./achievement/achievementSlice";
+import leaderboardReducer from "./leaderboard/leaderboardSlice";
 
 // Cấu hình persist
 const rootPersistConfig = {
@@ -25,6 +26,7 @@ const reducers = combineReducers({
   posts: postReducer,
   explore: exploreReducer,
   achievements: achievementReducer,
+  leaderboard: leaderboardReducer,
 });
 
 //Thực hiện persist Reducer

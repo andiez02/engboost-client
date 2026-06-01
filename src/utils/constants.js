@@ -24,6 +24,8 @@ export const routes = {
   MY_COURSE: '/my_course',
   //Daily Missions
   CHALLENGES: '/daily-missions',
+  //Leaderboard
+  LEADERBOARD: '/leaderboard',
   //Setting Account
   SETTINGS_ACCOUNT: '/settings/account',
   //Setting Security
@@ -59,6 +61,8 @@ export const routes = {
   ADMIN_FLASHCARD_MANAGEMENT: '/admin/flashcard_management',
   //Admin Explore Folders
   ADMIN_EXPLORE_FOLDERS: '/admin/explore_folders',
+  //Admin Community Folders
+  ADMIN_COMMUNITY_FOLDERS: '/admin/community_folders',
   //Admin User Management
   ADMIN_USER_MANAGEMENT: '/admin/user_management',
 };

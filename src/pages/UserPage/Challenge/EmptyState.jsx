@@ -1,56 +1,23 @@
-import { Box, Typography } from '@mui/material';
-import { tokens } from '../../../theme';
-
 export default function EmptyState() {
   return (
-    <Box
-      sx={{
-        bgcolor: '#fff',
-        border: `2px solid ${tokens.color.border}`,
-        borderRadius: '20px',
-        p: { xs: 5, sm: 7 },
-        textAlign: 'center',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: 2,
-      }}
-    >
-      <Box
-        sx={{
-          width: 80,
-          height: 80,
-          borderRadius: '20px',
-          bgcolor: '#F5F3FF',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
-        <span style={{ fontSize: '2.5rem' }}>😴</span>
-      </Box>
-
-      <Typography
-        sx={{
-          fontSize: '1.1rem',
-          fontWeight: 800,
-          color: tokens.color.textSub,
-        }}
-      >
+    <div style={{
+      background: '#fff', borderRadius: 20, padding: '48px 24px',
+      border: '2px solid #F0F0F0', borderBottom: '4px solid #E0E0E0',
+      textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
+    }}>
+      <div style={{
+        width: 72, height: 72, borderRadius: 20,
+        background: '#EDE9FE', border: '2px solid #DDD6FE', borderBottom: '4px solid #C4B5FD',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.2rem',
+      }}>
+        😴
+      </div>
+      <div style={{ fontWeight: 900, fontSize: '1.05rem', color: '#3D3D3D' }}>
         Không có thử thách hôm nay
-      </Typography>
-
-      <Typography
-        sx={{
-          fontSize: '0.85rem',
-          fontWeight: 500,
-          color: tokens.color.textSub,
-          maxWidth: 280,
-          lineHeight: 1.5,
-        }}
-      >
+      </div>
+      <div style={{ fontSize: '0.83rem', fontWeight: 500, color: '#AFAFAF', maxWidth: 260, lineHeight: 1.5 }}>
         Hãy quay lại vào ngày mai để nhận thử thách mới nhé!
-      </Typography>
-    </Box>
+      </div>
+    </div>
   );
 }

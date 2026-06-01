@@ -12,38 +12,24 @@ import {
   Box,
   Paper,
   Tooltip,
-  Chip,
-  Fade,
-  Zoom,
-  useTheme,
-  alpha,
   Grow,
-  LinearProgress,
 } from '@mui/material';
 import {
   Send,
   Bot,
-  Sparkles,
   Copy,
-  Lightbulb,
   RefreshCw,
-  ThumbsUp,
-  ThumbsDown,
   Zap,
-  BookOpen,
-  Mic,
-  Rocket,
-  Brain,
 } from 'lucide-react';
 import Sidebar from '../../../components/Layout/SideBar';
 import HeaderUser from '../../../components/Layout/HeaderUser';
+import { gamify, btn3d } from '../../../theme';
 
 function ChatbotPage() {
-  const theme = useTheme();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [messages, setMessages] = useState([
     {
-      text: 'Xin chào! Tôi là trợ lý học tiếng Anh của bạn. Bạn cần giúp đỡ gì?',
+      text: 'Xin chào! Tớ là trợ lý rùa AI thông minh của cậu đây.\nHôm nay cậu muốn học từ vựng hay luyện ngữ pháp nào?',
       sender: 'bot',
       time: new Date(),
     },
@@ -51,53 +37,24 @@ function ChatbotPage() {
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(true);
-  const [typingEffect, setTypingEffect] = useState('');
-  const [showWelcomeAnimation, setShowWelcomeAnimation] = useState(true);
-
+  
   const messagesEndRef = useRef(null);
   const currentUser = useSelector(selectCurrentUser);
   const inputRef = useRef(null);
 
   const suggestions = [
-    {
-      text: 'Giải thích cách sử dụng thì hiện tại hoàn thành',
-      icon: <BookOpen size={16} />,
-    },
-    { text: "Cách phát âm từ 'entrepreneur'", icon: <Mic size={16} /> },
-    { text: 'Từ vựng về chủ đề công nghệ', icon: <Rocket size={16} /> },
+    'Giúp tớ phân biệt "lay" và "lie" nhé!',
+    'Hôm nay học từ vựng chủ đề Động vật đi.',
+    'Chữa lỗi ngữ pháp trong câu "I has went to school" giúp tớ.',
   ];
-
-  // Hiệu ứng đánh máy cho tin nhắn chào mừng
-  useEffect(() => {
-    if (showWelcomeAnimation && messages.length === 1) {
-      const text = messages[0].text;
-      // Chuyển chuỗi thành mảng các ký tự Unicode đầy đủ
-      const characters = [...text];
-      let i = 0;
-      setTypingEffect('');
-
-      const typingInterval = setInterval(() => {
-        if (i < characters.length) {
-          setTypingEffect((prev) => prev + characters[i]);
-          i++;
-        } else {
-          clearInterval(typingInterval);
-          setShowWelcomeAnimation(false);
-        }
-      }, 30);
-
-      return () => clearInterval(typingInterval);
-    }
-  }, [showWelcomeAnimation, messages]);
 
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages, typingEffect]);
+  }, [messages, isLoading]);
 
   useEffect(() => {
-    // Ẩn gợi ý khi người dùng đã gửi tin nhắn
     if (messages.length > 1) {
       setShowSuggestions(false);
     }
@@ -105,7 +62,7 @@ function ChatbotPage() {
 
   const handleSendMessage = async (e) => {
     e?.preventDefault();
-    if (!inputMessage.trim()) return;
+    if (!inputMessage.trim() || isLoading) return;
 
     const userMessage = {
       text: inputMessage,
@@ -118,19 +75,17 @@ function ChatbotPage() {
 
     try {
       const response = await sendChatMessageAPI(inputMessage);
-
       const botMessage = {
         text:
           response.data.reply ||
-          'Xin lỗi, tôi không hiểu câu hỏi của bạn. Vui lòng thử lại.',
+          'Xin lỗi, tớ đang bận chút việc, cậu nói lại nhé!',
         sender: 'bot',
         time: new Date(),
       };
-
       setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
       const errorMessage = {
-        text: 'Đã xảy ra lỗi khi kết nối với trợ lý. Vui lòng thử lại sau.',
+        text: 'Lỗi rồi! Dây mạng nhà tớ bị đứt hay sao á 😭',
         sender: 'bot',
         time: new Date(),
       };
@@ -143,15 +98,12 @@ function ChatbotPage() {
   const resetConversation = () => {
     setMessages([
       {
-        text: 'Xin chào! Tôi là trợ lý học tiếng Anh của bạn. Bạn cần giúp đỡ gì?',
+        text: 'Xin chào! Tớ là trợ lý rùa AI thông minh của cậu đây.\nHôm nay cậu muốn học từ vựng hay luyện ngữ pháp nào?',
         sender: 'bot',
         time: new Date(),
       },
     ]);
     setShowSuggestions(true);
-    setShowWelcomeAnimation(true);
-
-    // Focus vào input sau khi reset
     setTimeout(() => {
       inputRef.current?.focus();
     }, 100);
@@ -160,161 +112,131 @@ function ChatbotPage() {
   const handleSuggestionClick = (suggestion) => {
     setInputMessage(suggestion);
     setTimeout(() => {
-      handleSendMessage();
-    }, 100);
+      // Simulate enter press or trigger submit directly
+      if (inputRef.current) {
+        inputRef.current.value = suggestion; 
+        const fakeEvent = { preventDefault: () => {} };
+        // We defer sending just a bit to allow input state to register
+      }
+    }, 50);
+  };
+  
+  // Actually we need an effect or wrapper to send immediately after clicking suggestion:
+  const sendClickedSuggestion = (suggestion) => {
+    setInputMessage(suggestion);
+    // Let state update before we fire off
+    setTimeout(() => {
+      const triggerSend = async () => {
+        setIsLoading(true);
+        const userMsg = { text: suggestion, sender: 'user', time: new Date() };
+        setMessages((prev) => [...prev, userMsg]);
+        setInputMessage('');
+        try {
+          const res = await sendChatMessageAPI(suggestion);
+          setMessages((prev) => [...prev, { text: res.data.reply, sender: 'bot', time: new Date() }]);
+        } catch (e) {
+          setMessages((prev) => [...prev, { text: 'Lỗi mạng rồi.', sender: 'bot', time: new Date() }]);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      triggerSend();
+    }, 0);
   };
 
-  const formatTime = (date) => {
-    return format(new Date(date), 'HH:mm');
-  };
+  const formatTime = (date) => format(new Date(date), 'HH:mm');
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
-    // Có thể thêm thông báo toast ở đây
   };
-
-  // Tạo gradient ngẫu nhiên cho avatar người dùng nếu không có avatar
-  const getRandomGradient = () => {
-    const gradients = [
-      'linear-gradient(45deg, #FF9A8B, #FF6A88)',
-      'linear-gradient(45deg, #FBDA61, #FF5ACD)',
-      'linear-gradient(45deg, #4158D0, #C850C0)',
-      'linear-gradient(45deg, #0093E9, #80D0C7)',
-      'linear-gradient(45deg, #8EC5FC, #E0C3FC)',
-      'linear-gradient(45deg, #85FFBD, #FFFB7D)',
-    ];
-    return gradients[Math.floor(Math.random() * gradients.length)];
-  };
-
-  // Hiệu ứng gradient cho nút gửi
-  const buttonGradient = 'linear-gradient(45deg, #3b82f6, #2563eb)';
 
   return (
     <div
       className="flex overflow-hidden h-screen"
-      style={{
-        backgroundColor: '#f4f6f9',
-      }}
+      style={{ backgroundColor: gamify.surface }}
     >
       <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
 
       <div
-        className={`flex-1 transition-all duration-300 ${
-          isSidebarOpen ? 'ml-58' : 'ml-20'
-        }`}
+        className={`flex-1 transition-all duration-300 ${isSidebarOpen ? 'ml-58' : 'ml-20'}`}
       >
-        {/* Main chat area */}
         <Box
           sx={{
             display: 'flex',
             flexDirection: 'column',
             height: '100vh',
-            bgcolor: 'white',
-            borderRadius: { xs: 0, md: 3 },
-            overflow: 'hidden',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
-            mx: { xs: 0, md: 2 },
-            my: { xs: 0, md: 2 },
+            bgcolor: gamify.surface,
           }}
         >
-          <HeaderUser
-            isSidebarOpen={isSidebarOpen}
-            setIsSidebarOpen={setIsSidebarOpen}
-          />
+          <HeaderUser isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
 
-          {/* Header with reset button */}
+          {/* Header Action Bar */}
           <Box
             sx={{
               display: 'flex',
-              justifyContent: 'center',
+              justifyContent: 'space-between',
               alignItems: 'center',
-              mt: '60px', // Để tránh bị che bởi header
+              mt: '60px', 
+              px: { xs: 2, md: 4 },
               pt: 2,
-              pb: 1,
-              borderBottom: '1px solid',
-              borderColor: 'divider',
-              position: 'relative',
-              bgcolor: 'white',
-              '&::after': {
-                content: '""',
-                position: 'absolute',
-                bottom: 0,
-                left: '10%',
-                width: '80%',
-                height: '1px',
-                background:
-                  'linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.5), transparent)',
-              },
+              pb: 2,
+              borderBottom: `2px solid ${gamify.gray}`,
+              bgcolor: gamify.white,
             }}
           >
-            <Zoom in={true} timeout={800}>
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <Avatar
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    mr: 2,
-                    bgcolor: theme.palette.primary.main,
-                    boxShadow: '0 0 20px rgba(59, 130, 246, 0.4)',
-                    animation: 'pulse 2s infinite',
-                    '@keyframes pulse': {
-                      '0%': {
-                        boxShadow: '0 0 0 0 rgba(59, 130, 246, 0.4)',
-                      },
-                      '70%': {
-                        boxShadow: '0 0 0 10px rgba(59, 130, 246, 0)',
-                      },
-                      '100%': {
-                        boxShadow: '0 0 0 0 rgba(59, 130, 246, 0)',
-                      },
-                    },
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Avatar
+                sx={{
+                  width: 48,
+                  height: 48,
+                  mr: 2,
+                  bgcolor: gamify.white,
+                  border: `2px solid ${gamify.gray}`,
+                  borderBottom: `4px solid ${gamify.grayDark}`,
+                  color: gamify.text,
+                }}
+              >
+                <Bot size={28} />
+              </Avatar>
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: 900,
+                  color: gamify.text,
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+              >
+                AI Tutor
+                <Zap
+                  size={20}
+                  style={{
+                    marginLeft: 8,
+                    color: gamify.xp,
                   }}
-                >
-                  <Bot size={24} />
-                </Avatar>
-                <Typography
-                  variant="h6"
-                  sx={{
-                    fontWeight: 600,
-                    background: 'linear-gradient(45deg, #3b82f6, #2563eb)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    display: 'flex',
-                    alignItems: 'center',
-                  }}
-                >
-                  Trợ lý học tiếng Anh
-                  <Zap
-                    size={18}
-                    style={{
-                      marginLeft: 8,
-                      color: theme.palette.primary.main,
-                      filter: 'drop-shadow(0 0 2px rgba(59, 130, 246, 0.5))',
-                    }}
-                  />
-                </Typography>
-              </Box>
-            </Zoom>
+                />
+              </Typography>
+            </Box>
 
-            <Tooltip title="Bắt đầu cuộc trò chuyện mới">
-              <IconButton
+            <Tooltip title="Làm mới cuộc trò chuyện">
+              <Box
+                component="button"
                 onClick={resetConversation}
                 sx={{
-                  ml: 2,
-                  color: theme.palette.primary.main,
-                  '&:hover': {
-                    bgcolor: alpha(theme.palette.primary.main, 0.1),
-                    transform: 'rotate(180deg)',
-                  },
-                  transition: 'all 0.5s',
+                  ...btn3d(gamify.white, gamify.grayDark),
+                  color: gamify.text,
+                  border: `2px solid ${gamify.gray}`,
+                  borderBottom: `4px solid ${gamify.grayDark}`,
+                  p: 1.5,
+                  minWidth: 'auto',
                 }}
               >
                 <RefreshCw size={20} />
-              </IconButton>
+              </Box>
             </Tooltip>
           </Box>
 
-          {/* Messages area - Chỉ áp dụng background chấm chỉ ở đây */}
+          {/* Chat Messages */}
           <Box
             sx={{
               flexGrow: 1,
@@ -322,167 +244,141 @@ function ChatbotPage() {
               p: { xs: 2, md: 4 },
               display: 'flex',
               flexDirection: 'column',
-              bgcolor: alpha(theme.palette.primary.main, 0.01),
-              backgroundImage:
-                'radial-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 1px)',
-              backgroundSize: '20px 20px',
+              bgcolor: gamify.surface,
             }}
           >
-            <Box sx={{ maxWidth: 900, width: '100%', mx: 'auto' }}>
+            <Box sx={{ maxWidth: 860, width: '100%', mx: 'auto' }}>
               {messages.map((message, index) => (
                 <Grow
                   in={true}
                   key={index}
-                  timeout={500}
-                  style={{
-                    transformOrigin:
-                      message.sender === 'user' ? 'right' : 'left',
-                  }}
+                  timeout={400}
+                  style={{ transformOrigin: message.sender === 'user' ? 'right center' : 'left center' }}
                 >
                   <Box
                     sx={{
                       mb: 4,
                       display: 'flex',
-                      justifyContent:
-                        message.sender === 'user' ? 'flex-end' : 'flex-start',
+                      flexDirection: message.sender === 'user' ? 'row-reverse' : 'row',
+                      alignItems: 'flex-end',
                       position: 'relative',
                     }}
                   >
-                    {message.sender === 'bot' && (
+                    {/* Character Avatar */}
+                    {message.sender === 'bot' ? (
                       <Avatar
                         sx={{
-                          width: 40,
-                          height: 40,
-                          mr: 2,
-                          mt: 0.5,
-                          bgcolor: theme.palette.primary.main,
-                          boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
-                          border: '2px solid white',
+                          width: 48,
+                          height: 48,
+                          mb: 1,
+                          bgcolor: gamify.white,
+                          border: `2px solid ${gamify.gray}`,
+                          color: gamify.text,
                         }}
                       >
-                        <Bot size={24} />
+                        <Bot size={28} />
                       </Avatar>
+                    ) : (
+                      <Avatar
+                        src={currentUser?.user?.avatar}
+                        sx={{
+                          width: 48,
+                          height: 48,
+                          mb: 1,
+                          bgcolor: gamify.blueBg,
+                          border: `2px solid ${gamify.blueDark}`,
+                          color: gamify.blue,
+                        }}
+                      />
                     )}
 
+                    {/* Speech Bubble Padding spacer */}
+                    <Box sx={{ width: 16 }} />
+
+                    {/* Speech Bubble */}
                     <Box
                       sx={{
-                        maxWidth: '70%',
+                        maxWidth: '75%',
                         position: 'relative',
-                        '&:hover .message-actions': {
-                          opacity: 1,
-                          transform: 'translateY(0)',
-                        },
+                        '&:hover .message-actions': { opacity: 1 },
                       }}
                     >
+                      {/* Name Tag */}
                       <Typography
-                        variant="subtitle2"
+                        variant="caption"
                         sx={{
+                          display: 'block',
                           mb: 0.5,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent:
-                            message.sender === 'user'
-                              ? 'flex-end'
-                              : 'flex-start',
-                          fontWeight: 600,
+                          fontWeight: 800,
+                          color: message.sender === 'bot' ? gamify.text : gamify.blue,
+                          textAlign: message.sender === 'user' ? 'right' : 'left',
                         }}
                       >
-                        {message.sender === 'bot' ? (
-                          <>
-                            <span>Trợ lý EngBoost</span>
-                            <Sparkles
-                              size={16}
-                              style={{
-                                marginLeft: 8,
-                                color: theme.palette.primary.main,
-                                filter:
-                                  'drop-shadow(0 0 2px rgba(59, 130, 246, 0.5))',
-                              }}
-                            />
-                          </>
-                        ) : (
-                          currentUser?.user?.username || 'Bạn'
-                        )}
+                        {message.sender === 'bot' ? 'Gia sư Rùa AI' : (currentUser?.user?.username || 'Bạn')}
                       </Typography>
 
+                      {/* Bubble Body */}
                       <Paper
-                        elevation={message.sender === 'user' ? 6 : 1}
+                        elevation={0}
                         sx={{
-                          p: 2,
-                          borderRadius: 3,
-                          background:
-                            message.sender === 'bot'
-                              ? 'white'
-                              : 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                          color:
-                            message.sender === 'bot' ? 'text.primary' : 'white',
-                          border:
-                            message.sender === 'bot' ? '1px solid' : 'none',
-                          borderColor: 'divider',
+                          p: 2.5,
+                          borderRadius: 4,
                           position: 'relative',
-                          transition: 'all 0.3s',
-                          ...(message.sender === 'user'
-                            ? {
-                                borderTopRightRadius: 0,
-                                boxShadow: '0 4px 15px rgba(37, 99, 235, 0.3)',
-                              }
-                            : {
-                                borderTopLeftRadius: 0,
-                                boxShadow: '0 2px 10px rgba(0, 0, 0, 0.05)',
-                              }),
-                          '&:hover': {
-                            transform: 'translateY(-2px)',
-                            boxShadow:
-                              message.sender === 'user'
-                                ? '0 8px 20px rgba(37, 99, 235, 0.4)'
-                                : '0 4px 15px rgba(0, 0, 0, 0.08)',
+                          bgcolor: message.sender === 'bot' ? gamify.white : gamify.blue,
+                          border: `2px solid ${
+                            message.sender === 'bot' ? gamify.gray : gamify.blueDark
+                          }`,
+                          borderBottom: `4px solid ${
+                            message.sender === 'bot' ? gamify.grayDark : gamify.blueDark
+                          }`,
+                          color: message.sender === 'bot' ? gamify.text : gamify.white,
+                          // The tail of dialog
+                          '&::before': {
+                            content: '""',
+                            position: 'absolute',
+                            bottom: 12,
+                            [message.sender === 'bot' ? 'left' : 'right']: -8,
+                            width: 14,
+                            height: 14,
+                            bgcolor: message.sender === 'bot' ? gamify.white : gamify.blue,
+                            borderLeft: message.sender === 'bot' ? `2px solid ${gamify.gray}` : 'none',
+                            borderBottom: message.sender === 'bot' ? `2px solid ${gamify.gray}` : 'none',
+                            borderRight: message.sender === 'user' ? `2px solid ${gamify.blueDark}` : 'none',
+                            borderTop: message.sender === 'user' ? `2px solid ${gamify.blueDark}` : 'none',
+                            transform: message.sender === 'bot' ? 'rotate(45deg)' : 'rotate(45deg)',
+                            zIndex: 0,
                           },
                         }}
                       >
-                        {index === 0 && showWelcomeAnimation ? (
-                          <Typography
-                            variant="body1"
-                            sx={{
-                              lineHeight: 1.6,
-                              whiteSpace: 'pre-line',
-                              minHeight: '24px',
-                            }}
-                          >
-                            {typingEffect}
-                            <span className="typing-cursor">|</span>
-                          </Typography>
-                        ) : message.sender === 'bot' ? (
-                          <Box className="markdown-body">
-                            <ReactMarkdown>{message.text}</ReactMarkdown>
-                          </Box>
-                        ) : (
-                          <Typography
-                            variant="body1"
-                            sx={{
-                              lineHeight: 1.6,
-                              whiteSpace: 'pre-line',
-                            }}
-                          >
-                            {message.text}
-                          </Typography>
-                        )}
+                        {/* Text Content */}
+                        <Box sx={{ position: 'relative', zIndex: 1, letterSpacing: 0.3 }}>
+                          {message.sender === 'bot' ? (
+                            <Box className="markdown-body gamify-markdown">
+                              <ReactMarkdown>{message.text}</ReactMarkdown>
+                            </Box>
+                          ) : (
+                            <Typography
+                              variant="body1"
+                              sx={{
+                                fontWeight: 600,
+                                whiteSpace: 'pre-line',
+                                lineHeight: 1.6,
+                              }}
+                            >
+                              {message.text}
+                            </Typography>
+                          )}
+                        </Box>
 
+                        {/* Copy Action */}
                         <Box
                           className="message-actions"
                           sx={{
                             position: 'absolute',
-                            top: -40,
-                            right: message.sender === 'bot' ? 8 : 'auto',
-                            left: message.sender === 'user' ? 8 : 'auto',
+                            top: -16,
+                            [message.sender === 'bot' ? 'right' : 'left']: 16,
                             opacity: 0,
-                            transform: 'translateY(10px)',
-                            transition: 'all 0.3s ease',
-                            display: 'flex',
-                            gap: 0.5,
-                            bgcolor: 'background.paper',
-                            borderRadius: 2,
-                            p: 0.5,
-                            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
+                            transition: 'opacity 0.2s',
                             zIndex: 10,
                           }}
                         >
@@ -491,267 +387,155 @@ function ChatbotPage() {
                               size="small"
                               onClick={() => copyToClipboard(message.text)}
                               sx={{
-                                '&:hover': {
-                                  bgcolor: alpha(
-                                    theme.palette.primary.main,
-                                    0.1
-                                  ),
-                                  transform: 'scale(1.1)',
-                                },
-                                transition: 'all 0.2s',
+                                bgcolor: gamify.white,
+                                border: `2px solid ${gamify.gray}`,
+                                color: gamify.text,
+                                '&:hover': { bgcolor: gamify.gray },
                               }}
                             >
-                              <Copy size={16} />
+                              <Copy size={14} />
                             </IconButton>
                           </Tooltip>
-
-                          {message.sender === 'bot' && (
-                            <>
-                              <Tooltip title="Hữu ích">
-                                <IconButton
-                                  size="small"
-                                  sx={{
-                                    '&:hover': {
-                                      bgcolor: alpha(
-                                        theme.palette.success.main,
-                                        0.1
-                                      ),
-                                      color: theme.palette.success.main,
-                                      transform: 'scale(1.1)',
-                                    },
-                                    transition: 'all 0.2s',
-                                  }}
-                                >
-                                  <ThumbsUp size={16} />
-                                </IconButton>
-                              </Tooltip>
-
-                              <Tooltip title="Không hữu ích">
-                                <IconButton
-                                  size="small"
-                                  sx={{
-                                    '&:hover': {
-                                      bgcolor: alpha(
-                                        theme.palette.error.main,
-                                        0.1
-                                      ),
-                                      color: theme.palette.error.main,
-                                      transform: 'scale(1.1)',
-                                    },
-                                    transition: 'all 0.2s',
-                                  }}
-                                >
-                                  <ThumbsDown size={16} />
-                                </IconButton>
-                              </Tooltip>
-                            </>
-                          )}
                         </Box>
                       </Paper>
 
+                      {/* Time */}
                       <Typography
                         variant="caption"
                         sx={{
                           display: 'block',
-                          mt: 0.5,
-                          color: 'text.secondary',
-                          textAlign:
-                            message.sender === 'user' ? 'right' : 'left',
-                          fontStyle: 'italic',
+                          mt: 1,
+                          color: gamify.sub,
+                          fontWeight: 600,
+                          textAlign: message.sender === 'user' ? 'right' : 'left',
                         }}
                       >
                         {formatTime(message.time)}
                       </Typography>
                     </Box>
-
-                    {message.sender === 'user' && (
-                      <Avatar
-                        src={currentUser?.user?.avatar}
-                        sx={{
-                          width: 40,
-                          height: 40,
-                          ml: 2,
-                          mt: 0.5,
-                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-                          border: '2px solid white',
-                          background:
-                            !currentUser?.user?.avatar && getRandomGradient(),
-                        }}
-                      />
-                    )}
                   </Box>
                 </Grow>
               ))}
 
+              {/* Loading Indicator Bubble */}
               {isLoading && (
-                <Fade in={true} timeout={300}>
+                <Grow in={true} timeout={300}>
                   <Box
                     sx={{
                       mb: 4,
                       display: 'flex',
-                      justifyContent: 'flex-start',
+                      flexDirection: 'row',
+                      alignItems: 'flex-end',
                     }}
                   >
                     <Avatar
                       sx={{
-                        width: 40,
-                        height: 40,
-                        mr: 2,
-                        mt: 0.5,
-                        bgcolor: theme.palette.primary.main,
-                        boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
-                        border: '2px solid white',
+                        width: 48,
+                        height: 48,
+                        mb: 1,
+                        bgcolor: gamify.white,
+                        border: `2px solid ${gamify.gray}`,
+                        color: gamify.text,
                       }}
                     >
-                      <Bot size={24} />
+                      <Bot size={28} />
                     </Avatar>
-
-                    <Box sx={{ maxWidth: '70%' }}>
-                      <Typography
-                        variant="subtitle2"
-                        sx={{ mb: 0.5, fontWeight: 600 }}
-                      >
-                        Trợ lý EngBoost
-                      </Typography>
-
-                      <Paper
-                        elevation={1}
-                        sx={{
-                          p: 2,
-                          borderRadius: 3,
-                          borderTopLeftRadius: 0,
-                          bgcolor: 'white',
-                          border: '1px solid',
-                          borderColor: 'divider',
-                          minWidth: 120,
-                          minHeight: 60,
-                          display: 'flex',
-                          flexDirection: 'column',
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                        }}
-                      >
-                        <Box sx={{ display: 'flex', gap: 0.8, mb: 1 }}>
-                          {[0, 1, 2].map((i) => (
-                            <Box
-                              key={i}
-                              sx={{
-                                width: 10,
-                                height: 10,
-                                borderRadius: '50%',
-                                backgroundColor: theme.palette.primary.main,
-                                opacity: 0.7,
-                                animation: 'bounce 1.4s infinite ease-in-out',
-                                animationDelay: `${i * 0.2}s`,
-                                '@keyframes bounce': {
-                                  '0%, 100%': {
-                                    transform: 'translateY(0)',
-                                  },
-                                  '50%': {
-                                    transform: 'translateY(-10px)',
-                                  },
-                                },
-                              }}
-                            />
-                          ))}
-                        </Box>
-                      </Paper>
-                    </Box>
-                  </Box>
-                </Fade>
-              )}
-
-              {/* Gợi ý câu hỏi */}
-              {showSuggestions && messages.length === 1 && (
-                <Fade in={true} timeout={800}>
-                  <Box sx={{ mt: 4, mb: 4 }}>
-                    <Typography
-                      variant="subtitle1"
+                    <Box sx={{ width: 16 }} />
+                    <Paper
+                      elevation={0}
                       sx={{
-                        mb: 2,
+                        p: 2.5,
+                        borderRadius: 4,
+                        bgcolor: gamify.white,
+                        border: `2px solid ${gamify.gray}`,
+                        borderBottom: `4px solid ${gamify.grayDark}`,
+                        position: 'relative',
+                        minWidth: 100,
                         display: 'flex',
-                        alignItems: 'center',
-                        color: 'text.primary',
-                        fontWeight: 600,
+                        justifyContent: 'center',
+                        '&::before': {
+                          content: '""',
+                          position: 'absolute',
+                          bottom: 12,
+                          left: -8,
+                          width: 14,
+                          height: 14,
+                          bgcolor: gamify.white,
+                          borderLeft: `2px solid ${gamify.gray}`,
+                          borderBottom: `2px solid ${gamify.gray}`,
+                          transform: 'rotate(45deg)',
+                        },
                       }}
                     >
-                      <Lightbulb
-                        size={18}
-                        style={{
-                          marginRight: 8,
-                          color: '#f59e0b',
-                          filter:
-                            'drop-shadow(0 0 3px rgba(245, 158, 11, 0.5))',
-                        }}
-                      />
-                      Gợi ý câu hỏi
-                    </Typography>
-
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
-                      {suggestions.map((suggestion, index) => (
-                        <Grow in={true} key={index} timeout={500 + index * 100}>
-                          <Chip
-                            icon={suggestion.icon}
-                            label={suggestion.text}
-                            onClick={() =>
-                              handleSuggestionClick(suggestion.text)
-                            }
+                      <Box sx={{ display: 'flex', gap: 1 }}>
+                        {[0, 1, 2].map((i) => (
+                          <Box
+                            key={i}
                             sx={{
-                              borderRadius: 3,
-                              py: 3,
-                              px: 1,
-                              bgcolor: 'white',
-                              border: '1px solid',
-                              borderColor: alpha(
-                                theme.palette.primary.main,
-                                0.3
-                              ),
-                              '&:hover': {
-                                bgcolor: alpha(
-                                  theme.palette.primary.main,
-                                  0.08
-                                ),
-                                borderColor: theme.palette.primary.main,
-                                transform: 'translateY(-3px)',
-                                boxShadow:
-                                  '0 6px 15px rgba(59, 130, 246, 0.15)',
+                              width: 10,
+                              height: 10,
+                              borderRadius: '50%',
+                              bgcolor: gamify.grayDark,
+                              animation: 'bounce 1.2s infinite ease-in-out',
+                              animationDelay: `${i * 0.2}s`,
+                              '@keyframes bounce': {
+                                '0%, 100%': { transform: 'translateY(0)' },
+                                '50%': { transform: 'translateY(-6px)' },
                               },
-                              cursor: 'pointer',
-                              transition: 'all 0.3s',
-                              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
-                              fontWeight: 500,
                             }}
                           />
-                        </Grow>
-                      ))}
-                    </Box>
+                        ))}
+                      </Box>
+                    </Paper>
                   </Box>
-                </Fade>
+                </Grow>
+              )}
+
+              {/* Suggestions */}
+              {showSuggestions && messages.length === 1 && (
+                <Box sx={{ mt: 2, mb: 4, display: 'flex', gap: 2, flexWrap: 'wrap', ml: { xs: 0, sm: '64px' } }}>
+                  {suggestions.map((suggestion, index) => (
+                    <Box
+                      key={index}
+                      component="button"
+                      onClick={() => sendClickedSuggestion(suggestion)}
+                      sx={{
+                        ...btn3d(gamify.white, gamify.grayDark),
+                        color: gamify.blue,
+                        border: `2px solid ${gamify.gray}`,
+                        borderBottom: `4px solid ${gamify.grayDark}`,
+                        px: 3,
+                        py: 2,
+                        textAlign: 'left',
+                        whiteSpace: 'normal',
+                        fontWeight: 700,
+                        letterSpacing: 0.2,
+                        textTransform: 'none',
+                        fontSize: '0.95rem',
+                        '&:hover': {
+                          bgcolor: gamify.blueBg,
+                          borderColor: gamify.blue,
+                        },
+                      }}
+                    >
+                      {suggestion}
+                    </Box>
+                  ))}
+                </Box>
               )}
 
               <div ref={messagesEndRef} />
             </Box>
           </Box>
 
-          {/* Input area */}
+          {/* Input Area */}
           <Box
             sx={{
-              p: 2,
-              borderTop: '1px solid',
-              borderColor: 'divider',
-              bgcolor: 'white',
-              boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.05)',
-              position: 'relative',
-              '&::before': {
-                content: '""',
-                position: 'absolute',
-                top: 0,
-                left: '10%',
-                width: '80%',
-                height: '1px',
-                background:
-                  'linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.5), transparent)',
-              },
+              p: { xs: 2, md: 3 },
+              borderTop: `2px solid ${gamify.gray}`,
+              bgcolor: gamify.white,
+              display: 'flex',
+              justifyContent: 'center',
             }}
           >
             <Box
@@ -759,34 +543,35 @@ function ChatbotPage() {
               onSubmit={handleSendMessage}
               sx={{
                 display: 'flex',
-                gap: 1.5,
-                maxWidth: 800,
-                mx: 'auto',
-                position: 'relative',
+                gap: 2,
+                width: '100%',
+                maxWidth: 860,
+                alignItems: 'flex-end',
               }}
             >
               <TextField
                 fullWidth
                 multiline
-                maxRows={4}
+                maxRows={3}
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
-                placeholder="Nhập câu hỏi của bạn..."
-                variant="outlined"
+                placeholder="Hỏi tớ bài tập tiếng Anh nào..."
                 inputRef={inputRef}
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    borderRadius: 3,
-                    py: 1.5,
+                    borderRadius: 4,
+                    bgcolor: gamify.surface,
+                    fontWeight: 600,
                     px: 2,
-                    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.05)',
-                    transition: 'all 0.3s',
-                    '&:hover, &.Mui-focused': {
-                      boxShadow: '0 4px 15px rgba(59, 130, 246, 0.15)',
-                    },
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                      borderColor: theme.palette.primary.main,
-                      borderWidth: '1px',
+                    py: 1.5,
+                    border: `2px solid ${gamify.gray}`,
+                    borderBottom: `4px solid ${gamify.grayDark}`,
+                    transition: 'all 0.1s',
+                    '& fieldset': { border: 'none' },
+                    '&:focus-within': {
+                      border: `2px solid ${gamify.blueDark}`,
+                      borderBottom: `4px solid ${gamify.blueDark}`,
+                      bgcolor: gamify.white,
                     },
                   },
                 }}
@@ -797,192 +582,90 @@ function ChatbotPage() {
                   }
                 }}
               />
-              <Tooltip title="Gửi tin nhắn">
-                <IconButton
-                  type="submit"
-                  disabled={isLoading || !inputMessage.trim()}
-                  sx={{
-                    background: buttonGradient,
-                    color: 'white',
-                    '&:hover': {
-                      background: buttonGradient,
-                      opacity: 0.9,
-                      transform: 'translateY(-2px)',
-                    },
-                    '&.Mui-disabled': {
-                      background: alpha(theme.palette.primary.main, 0.4),
-                      color: 'white',
-                    },
-                    height: 56,
-                    width: 56,
-                    boxShadow: '0 4px 15px rgba(59, 130, 246, 0.3)',
-                    transition: 'all 0.3s',
-                  }}
-                >
-                  <Send size={24} />
-                </IconButton>
-              </Tooltip>
+              <Box
+                component="button"
+                type="submit"
+                disabled={isLoading || !inputMessage.trim()}
+                sx={{
+                  ...btn3d(gamify.blue, gamify.blueDark),
+                  minWidth: 56,
+                  height: 56,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: 4,
+                  flexShrink: 0,
+                  pb: '4px', // text visual alignment
+                }}
+              >
+                <Send size={24} strokeWidth={2.5} />
+              </Box>
             </Box>
           </Box>
         </Box>
       </div>
 
+      {/* Global CSS for Markdown in Gamify Style */}
       <style jsx global>{`
-        @keyframes blink {
-          0%,
-          100% {
-            opacity: 1;
-          }
-          50% {
-            opacity: 0;
-          }
-        }
-
-        .typing-cursor {
-          animation: blink 1s infinite;
-          font-weight: bold;
-        }
-
-        .markdown-body {
-          font-family: inherit;
-          line-height: 1.6;
-        }
-
-        .markdown-body p {
-          margin: 0.8em 0;
-        }
-
-        .markdown-body strong {
+        .gamify-markdown {
+          font-family: 'Nunito', 'Inter', sans-serif;
           font-weight: 600;
-          color: #3b82f6;
+          color: ${gamify.text};
         }
-
-        .markdown-body h1 {
-          font-size: 1.5rem;
-          margin: 1em 0 0.5em;
-          font-weight: 600;
-          color: #1e40af;
+        .gamify-markdown p {
+          margin: 0.5em 0;
         }
-
-        .markdown-body h2 {
-          font-size: 1.3rem;
-          margin: 1em 0 0.5em;
-          font-weight: 600;
-          color: #1e40af;
+        .gamify-markdown strong {
+          color: ${gamify.blueDark};
+          font-weight: 800;
         }
-
-        .markdown-body h3 {
-          font-size: 1.1rem;
-          margin: 1em 0 0.5em;
-          font-weight: 600;
-          color: #1e40af;
-        }
-
-        .markdown-body h4 {
-          font-size: 1rem;
-          margin: 1em 0 0.5em;
-          font-weight: 600;
-          color: #1e40af;
-        }
-
-        .markdown-body ul,
-        .markdown-body ol {
-          padding-left: 1.5em;
-          margin: 0.8em 0;
-        }
-
-        .markdown-body li {
-          margin: 0.3em 0;
-        }
-
-        .markdown-body li p {
-          margin: 0.3em 0;
-        }
-
-        .markdown-body code {
-          background-color: rgba(0, 0, 0, 0.05);
-          padding: 0.2em 0.4em;
-          border-radius: 3px;
-          font-family: monospace;
-          font-size: 0.9em;
-        }
-
-        .markdown-body pre {
-          background-color: rgba(0, 0, 0, 0.05);
-          padding: 1em;
-          border-radius: 5px;
-          overflow-x: auto;
-          margin: 0.8em 0;
-        }
-
-        .markdown-body blockquote {
-          border-left: 3px solid rgba(59, 130, 246, 0.5);
-          padding-left: 1em;
-          margin: 0.8em 0;
-          color: rgba(0, 0, 0, 0.7);
+        .gamify-markdown em {
+          color: ${gamify.red};
+          font-weight: 700;
           font-style: italic;
         }
-
-        .markdown-body a {
-          color: #3b82f6;
-          text-decoration: none;
+        .gamify-markdown h1, .gamify-markdown h2, .gamify-markdown h3 {
+          color: ${gamify.blueDark};
+          font-weight: 900;
+          margin: 1em 0 0.5em;
         }
-
-        .markdown-body a:hover {
-          text-decoration: underline;
+        .gamify-markdown ul, .gamify-markdown ol {
+          padding-left: 1.5em;
+          margin: 0.5em 0;
         }
-
-        .markdown-body table {
-          border-collapse: collapse;
-          width: 100%;
+        .gamify-markdown li {
+          margin: 0.2em 0;
+        }
+        .gamify-markdown code {
+          background-color: ${gamify.surface};
+          color: ${gamify.redDark};
+          padding: 0.2em 0.5em;
+          border-radius: 6px;
+          border: 1px solid ${gamify.gray};
+          font-weight: 700;
+          font-size: 0.9em;
+        }
+        .gamify-markdown pre {
+          background-color: ${gamify.surface};
+          border: 2px solid ${gamify.gray};
+          border-radius: 12px;
+          padding: 1em;
+          overflow-x: auto;
           margin: 1em 0;
         }
-
-        .markdown-body th,
-        .markdown-body td {
-          border: 1px solid #e5e7eb;
-          padding: 0.5em;
-          text-align: left;
-        }
-
-        .markdown-body th {
-          background-color: rgba(59, 130, 246, 0.1);
-          font-weight: 600;
-        }
-
-        .markdown-body tr:nth-child(even) {
-          background-color: rgba(0, 0, 0, 0.02);
-        }
-
-        .markdown-body img {
-          max-width: 100%;
-          border-radius: 5px;
-          margin: 0.8em 0;
-        }
-
-        .markdown-body hr {
+        .gamify-markdown pre code {
+          background: none;
           border: none;
-          border-top: 1px solid #e5e7eb;
-          margin: 1.5em 0;
+          padding: 0;
+          color: ${gamify.text};
         }
-
-        /* Đảm bảo các dấu đầu dòng hiển thị đúng */
-        .markdown-body ul {
-          list-style-type: disc;
-        }
-
-        .markdown-body ol {
-          list-style-type: decimal;
-        }
-
-        .markdown-body ul ul,
-        .markdown-body ol ul {
-          list-style-type: circle;
-        }
-
-        .markdown-body ul ul ul,
-        .markdown-body ol ul ul {
-          list-style-type: square;
+        .gamify-markdown blockquote {
+          border-left: 4px solid ${gamify.blue};
+          background-color: ${gamify.blueBg};
+          padding: 0.5em 1em;
+          margin: 1em 0;
+          border-radius: 8px;
+          color: ${gamify.blueDark};
         }
       `}</style>
     </div>

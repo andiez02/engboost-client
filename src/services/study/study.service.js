@@ -7,8 +7,10 @@ const getDueCards = async (folderId) => {
   return response.data;
 };
 
-const reviewCard = async ({ cardId, rating }) => {
-  const response = await authorizedAxiosInstance.post(`${API_ROOT}/study/review`, { cardId, rating });
+const reviewCard = async ({ cardId, rating, responseTimeMs }) => {
+  const body = { cardId, rating };
+  if (responseTimeMs != null) body.responseTimeMs = responseTimeMs;
+  const response = await authorizedAxiosInstance.post(`${API_ROOT}/study/review`, body);
   return response.data;
 };
 

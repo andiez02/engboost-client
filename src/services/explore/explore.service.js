@@ -11,4 +11,14 @@ const cloneFolder = async (folderId) => {
   return response.data;
 };
 
-export const exploreService = { getExploreFolders, cloneFolder };
+const getCommunityFolders = async () => {
+  const response = await authorizedAxiosInstance.get(`${API_ROOT}/explore/community`);
+  return response.data;
+};
+
+const cloneCommunityFolder = async (folderId) => {
+  const response = await authorizedAxiosInstance.post(`${API_ROOT}/explore/community/${folderId}/clone`);
+  return response.data;
+};
+
+export const exploreService = { getExploreFolders, cloneFolder, getCommunityFolders, cloneCommunityFolder };

@@ -11,6 +11,7 @@ import { courseService } from '../services/course/course.service';
 import { chatbotService } from '../services/chatbot/chatbot.service';
 import { snaplangService } from '../services/snaplang/snaplang.service';
 import { postService } from '../services/post/post.service';
+import { notificationService } from '../services/notification/notification.service';
 
 // User Service exports
 export const registerUserAPI = userService.registerUser;
@@ -19,6 +20,9 @@ export const refreshTokenAPI = userService.refreshToken;
 export const getListUsersAPI = userService.getListUsers;
 export const updateUserRoleAPI = userService.updateUserRole;
 export const deleteUserAPI = userService.deleteUser;
+export const exportUsersExcelAPI = userService.exportUsersExcel;
+export const getUserAnalyticsAPI = userService.getUserAnalytics;
+export const getMeAPI = userService.getMe;
 
 // Folder Service exports
 export const getFoldersAPI = folderService.getFolders;
@@ -54,7 +58,13 @@ export const snaplangDetectAPI = snaplangService.snaplangDetect;
 
 // Post Service exports
 export const getPostsAPI = postService.getPosts;
+export const getPostByIdAPI = postService.getPostById;
 export const likePostAPI = postService.likePost;
 export const unlikePostAPI = postService.unlikePost;
 export const savePostAPI = postService.savePost;
 export const createPostAPI = postService.createPost;
+
+// Notification Service exports
+export const getNotificationsAPI = notificationService.getNotifications;
+export const markNotificationAsReadAPI = notificationService.markAsRead;
+export const markAllNotificationsAsReadAPI = notificationService.markAllAsRead;

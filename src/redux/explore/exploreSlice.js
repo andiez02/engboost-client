@@ -51,8 +51,12 @@ const exploreSlice = createSlice({
       .addCase(cloneExploreFolder.pending, (state, action) => {
         state.cloningId = action.meta.arg;
       })
-      .addCase(cloneExploreFolder.fulfilled, (state) => {
+      .addCase(cloneExploreFolder.fulfilled, (state, action) => {
         state.cloningId = null;
+        // Mark folder as cloned in local state
+        const folderId = action.payload.folderId;
+        const folder = state.folders.find((f) => f.id === folderId);
+        if (folder) folder.is_cloned = true;
       })
       .addCase(cloneExploreFolder.rejected, (state) => {
         state.cloningId = null;

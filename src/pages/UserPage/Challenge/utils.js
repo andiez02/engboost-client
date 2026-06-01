@@ -1,5 +1,5 @@
 /**
- * Select the "main" challenge — the incomplete challenge closest to completion.
+ * Select the "main" challenge — the incomplete challenge with the highest priority.
  * @param {Array} challenges
  * @returns {{ main: object|null, side: Array }}
  */
@@ -11,12 +11,8 @@ export function getMainChallenge(challenges = []) {
     return { main: null, side: completed };
   }
 
-  // Sort by progress ratio DESC → the one closest to finishing first
-  const sorted = [...incomplete].sort((a, b) => {
-    const ratioA = a.target > 0 ? a.progress / a.target : 0;
-    const ratioB = b.target > 0 ? b.progress / b.target : 0;
-    return ratioB - ratioA;
-  });
+  // Sort by priority DESC → the highest-priority challenge becomes main
+  const sorted = [...incomplete].sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0));
 
   const [main, ...restIncomplete] = sorted;
   return { main, side: [...restIncomplete, ...completed] };

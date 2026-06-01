@@ -10,6 +10,17 @@ export default function TypingCard({ card, onAnswer, responseTimeMs, lastRating,
 
   const submitted = externalSubmitted ?? localSubmitted;
 
+  useEffect(() => {
+    if (lastRating === null || lastRating === undefined) return;
+    const anims = {
+      0: { x: [-4, 4, -4, 4, 0], transition: { duration: 0.25 } },
+      1: { scale: [1, 1.02, 1], transition: { duration: 0.2 } },
+      2: { scale: [1, 1.02, 1], transition: { duration: 0.2 } },
+      3: { scale: [1, 1.03, 1], transition: { duration: 0.25 } },
+    };
+    if (anims[lastRating]) controls.start(anims[lastRating]);
+  }, [lastRating, controls]);
+
   if (!card) return null;
 
   const headword    = card.lexicalEntry?.headword || '';
@@ -26,17 +37,6 @@ export default function TypingCard({ card, onAnswer, responseTimeMs, lastRating,
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') handleSubmit();
   };
-
-  useEffect(() => {
-    if (lastRating === null || lastRating === undefined) return;
-    const anims = {
-      0: { x: [-4, 4, -4, 4, 0], transition: { duration: 0.25 } },
-      1: { scale: [1, 1.02, 1], transition: { duration: 0.2 } },
-      2: { scale: [1, 1.02, 1], transition: { duration: 0.2 } },
-      3: { scale: [1, 1.03, 1], transition: { duration: 0.25 } },
-    };
-    if (anims[lastRating]) controls.start(anims[lastRating]);
-  }, [lastRating, controls]);
 
   const timeLabel = responseTimeMs ? getResponseTimeLabel(responseTimeMs) : null;
 

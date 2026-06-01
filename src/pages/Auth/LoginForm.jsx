@@ -22,11 +22,11 @@ import {
   PASSWORD_RULE_MESSAGE,
 } from '../../utils/validator';
 import FieldErrorAlert from '../../components/Form/FieldErrorAlert';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import Footer from '../../components/Layout/Footer';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
-import { loginUserAPI } from '../../redux/user/userSlice';
+import { loginUserAPI, fetchMeAPI } from '../../redux/user/userSlice';
 
 function Login() {
   const [showPassword, setShowPassword] = useState(false);
@@ -63,6 +63,8 @@ function Login() {
     try {
       const { email, password } = data;
       const result = await dispatch(loginUserAPI({ email, password })).unwrap();
+      // Fetch full profile (avatar, username, level, xp) right after login
+      dispatch(fetchMeAPI());
 
       if (result.message) {
         toast.success(result.message);
@@ -156,8 +158,8 @@ function Login() {
                     </Alert>
                   )}
                   {registeredEmail && (
-                    <Alert severity="info" sx={{ borderRadius: '12px' }}>
-                      Đã gửi email xác minh đến <strong>{registeredEmail}</strong>.
+                    <Alert severity="success" sx={{ borderRadius: '12px' }}>
+                      Đăng ký tài khoản <strong>{registeredEmail}</strong> thành công! Bạn có thể đăng nhập ngay.
                     </Alert>
                   )}
                 </Box>

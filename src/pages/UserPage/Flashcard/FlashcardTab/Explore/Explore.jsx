@@ -1,12 +1,12 @@
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Box, Typography, CircularProgress, Alert, Chip } from '@mui/material';
+import { CircularProgress } from '@mui/material';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import { fetchExploreFolders, cloneExploreFolder } from '../../../../../redux/explore/exploreSlice';
 import { fetchFolders } from '../../../../../redux/folder/folderSlice';
 import { selectCurrentUser } from '../../../../../redux/user/userSlice';
 import ExploreFolderCard from './ExploreFolderCard';
-import { gamify } from '../../../../../theme';
+import { gamify as t } from '../../../../../theme';
 import { toast } from 'react-toastify';
 
 export default function Explore() {
@@ -29,82 +29,104 @@ export default function Explore() {
   };
 
   return (
-    <Box sx={{ py: 2 }}>
-      {/* Header */}
-      <Box
-        sx={{
-          borderRadius: 3, border: `2px solid ${gamify.gray}`, borderBottom: `4px solid ${gamify.grayDark}`,
-          bgcolor: '#fff', p: { xs: 3, md: 4 }, mb: 4,
-          display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: { sm: 'center' },
-          justifyContent: 'space-between', gap: 2,
-        }}
-      >
-        <Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-            <LockOpenIcon sx={{ color: gamify.blue, fontSize: 20 }} />
-            <Typography sx={{ fontSize: '0.75rem', fontWeight: 900, color: gamify.blue, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-              Explore Folders
-            </Typography>
-          </Box>
-          <Typography sx={{ fontWeight: 900, fontSize: '1.3rem', color: gamify.text }}>
-            Unlock & Learn
-          </Typography>
-          <Typography sx={{ fontSize: '0.85rem', color: gamify.sub, mt: 0.5 }}>
-            Level up to unlock more vocabulary sets
-          </Typography>
-        </Box>
+    <div style={{ paddingTop: 8, paddingBottom: 32 }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexShrink: 0 }}>
-          <Typography sx={{ fontSize: '0.8rem', fontWeight: 700, color: gamify.sub }}>Your level</Typography>
-          <Chip
-            label={`Level ${userLevel}`}
-            sx={{ bgcolor: gamify.blueBg, color: gamify.blue, border: `2px solid ${gamify.blue}`, fontWeight: 900, fontSize: '0.85rem' }}
-          />
-        </Box>
-      </Box>
+        {/* ── Header ── */}
+        <div style={{
+          borderRadius: 20, border: `2px solid ${t.gray}`,
+          borderBottom: `4px solid ${t.grayDark}`,
+          background: '#fff', padding: '20px 24px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          flexWrap: 'wrap', gap: 16,
+        }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+              <LockOpenIcon sx={{ color: t.blue, fontSize: 16 }} />
+              <span style={{ fontSize: '0.68rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.blue }}>
+                EXPLORE FOLDERS
+              </span>
+            </div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 900, color: t.text, lineHeight: 1.2 }}>
+              Unlock &amp; Learn
+            </div>
+            <div style={{ marginTop: 4, fontSize: '0.82rem', fontWeight: 700, color: t.sub }}>
+              Level up để mở khóa thêm bộ từ vựng mới.
+            </div>
+          </div>
 
-      {/* Loading */}
-      {loading && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-          <CircularProgress sx={{ color: gamify.blue }} />
-        </Box>
-      )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: t.sub }}>Level của bạn</span>
+            <div style={{
+              borderRadius: 16, padding: '8px 16px',
+              border: `2px solid ${t.blue}`, borderBottom: `4px solid ${t.blueDark}`,
+              backgroundColor: t.blueBg,
+            }}>
+              <span style={{ fontSize: '1rem', fontWeight: 900, color: t.blue }}>
+                Level {userLevel}
+              </span>
+            </div>
+          </div>
+        </div>
 
-      {/* Error */}
-      {error && !loading && (
-        <Alert severity="error" sx={{ borderRadius: 2, mb: 3 }}>
-          {typeof error === 'string' ? error : 'Failed to load folders.'}
-        </Alert>
-      )}
+        {/* ── Loading ── */}
+        {loading && (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '48px 0' }}>
+            <CircularProgress sx={{ color: t.blue }} />
+          </div>
+        )}
 
-      {/* Empty */}
-      {!loading && !error && folders.length === 0 && (
-        <Box sx={{ textAlign: 'center', py: 10, border: `2px dashed ${gamify.gray}`, borderRadius: 3 }}>
-          <LockOpenIcon sx={{ fontSize: 48, color: gamify.sub, mb: 2 }} />
-          <Typography sx={{ fontWeight: 700, color: gamify.sub }}>No explore folders yet</Typography>
-        </Box>
-      )}
+        {/* ── Error ── */}
+        {error && !loading && (
+          <div style={{
+            borderRadius: 16, padding: '16px 20px',
+            border: `2px solid ${t.red}`, borderBottom: `4px solid ${t.redDark}`,
+            background: t.redBg, color: t.red,
+            fontSize: '0.88rem', fontWeight: 700,
+          }}>
+            {typeof error === 'string' ? error : 'Không thể tải danh sách. Vui lòng thử lại.'}
+          </div>
+        )}
 
-      {/* Grid */}
-      {!loading && folders.length > 0 && (
-        <Box
-          sx={{
+        {/* ── Empty ── */}
+        {!loading && !error && folders.length === 0 && (
+          <div style={{
+            borderRadius: 20, border: `2px dashed ${t.gray}`,
+            background: '#FAFAFA', padding: '48px 24px', textAlign: 'center',
+          }}>
+            <div style={{
+              margin: '0 auto 16px', width: 72, height: 72,
+              borderRadius: 20, background: '#fff',
+              border: `2px solid ${t.gray}`, borderBottom: `4px solid ${t.grayDark}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <LockOpenIcon sx={{ fontSize: 32, color: t.sub }} />
+            </div>
+            <div style={{ fontSize: '1.1rem', fontWeight: 900, color: t.text }}>Chưa có folder nào</div>
+            <div style={{ marginTop: 6, fontSize: '0.82rem', fontWeight: 700, color: t.sub }}>Quay lại sau nhé!</div>
+          </div>
+        )}
+
+        {/* ── Grid ── */}
+        {!loading && folders.length > 0 && (
+          <div style={{
             display: 'grid',
-            gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)', lg: 'repeat(4, 1fr)' },
-            gap: 2.5,
-          }}
-        >
-          {folders.map((folder) => (
-            <ExploreFolderCard
-              key={folder.id}
-              folder={folder}
-              userLevel={userLevel}
-              isCloning={cloningId === folder.id}
-              onClone={handleClone}
-            />
-          ))}
-        </Box>
-      )}
-    </Box>
+            gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+            gap: 16,
+          }}>
+            {folders.map((folder) => (
+              <ExploreFolderCard
+                key={folder.id}
+                folder={folder}
+                userLevel={userLevel}
+                isCloning={cloningId === folder.id}
+                isCloned={folder.is_cloned ?? false}
+                onClone={handleClone}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

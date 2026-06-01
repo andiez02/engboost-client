@@ -1,0 +1,42 @@
+/* ── Dashboard layout ── */
+.db-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.db-main {
+  width: 100%;
+}
+.db-sidebar {
+  width: 100%;
+}
+
+@media (min-width: 1024px) {
+  .db-layout {
+    grid-template-columns: 1fr 320px;
+    max-width: 100%;
+    align-items: start;
+  }
+
+  .db-sidebar {
+    position: sticky;
+    top: 88px;
+    max-height: calc(100vh - 108px);
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+  .db-sidebar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Show lottie illustration in hero on wider screens */
+@media (min-width: 560px) {
+  .db-hero-lottie {
+    display: block !important;
+  }
+}

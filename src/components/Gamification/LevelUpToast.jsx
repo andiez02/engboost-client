@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import { clearLevelUp } from '../../redux/study/studySlice';
+import ShareButton from './ShareButton';
 
 export default function LevelUpToast() {
   const dispatch = useDispatch();
@@ -13,13 +14,14 @@ export default function LevelUpToast() {
       toast(
         <div className="flex items-center gap-3">
           <div className="text-3xl animate-bounce">🎉</div>
-          <div className="flex flex-col">
+          <div className="flex flex-col gap-1">
             <span style={{ fontWeight: 900, fontSize: '0.75rem', color: '#FF9600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Level Up!
             </span>
             <span style={{ fontWeight: 800, fontSize: '1rem', color: '#4B4B4B' }}>
               Bạn đã đạt Level {newLevel} 🚀
             </span>
+            <ShareButton message={`🔥 Tôi vừa đạt Level ${newLevel} trên EngBoost!`} />
           </div>
         </div>,
         {

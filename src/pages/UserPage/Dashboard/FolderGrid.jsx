@@ -1,264 +1,120 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, ButtonBase, Skeleton, Typography } from '@mui/material';
+import { Skeleton } from '@mui/material';
+import { tokens } from '../../../theme';
 
 export default function FolderGrid({ folders = [], isLoading }) {
   const navigate = useNavigate();
-
-  const sortedFolders = useMemo(() => {
-    return [...folders].sort((firstFolder, secondFolder) => {
-      const firstDueCount = firstFolder.due_count ?? 0;
-      const secondDueCount = secondFolder.due_count ?? 0;
-      return secondDueCount - firstDueCount;
-    });
-  }, [folders]);
+  const sorted = useMemo(() =>
+    [...folders].sort((a, b) => (b.due_count ?? 0) - (a.due_count ?? 0)),
+    [folders]
+  );
 
   return (
-    <Box
-      sx={{
-        borderRadius: 4,
-        bgcolor: '#fff',
-        border: '2px solid #E5E5E5',
-        borderBottom: '4px solid #E5E5E5',
-        p: { xs: 2.5, md: 3 },
-      }}
-    >
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row' },
-          alignItems: { xs: 'flex-start', sm: 'center' },
-          justifyContent: 'space-between',
-          gap: 1.25,
-          mb: 3,
-        }}
-      >
-        <Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-            <Typography fontSize="1.2rem">📚</Typography>
-            <Typography fontSize="0.85rem" fontWeight={900} color="#AFAFAF" sx={{ letterSpacing: '0.05em' }}>
-              BỘ THẺ TỪ VỰNG
-            </Typography>
-          </Box>
-          <Typography fontWeight={900} fontSize="1.3rem" sx={{ mt: 0.5, color: '#4B4B4B', letterSpacing: '-0.02em' }}>
-            Chọn bộ để học tiếp
-          </Typography>
-        </Box>
+    <div style={{
+      background: '#fff', borderRadius: 20, padding: '18px 20px',
+      border: '2px solid #F0F0F0', borderBottom: '4px solid #E0E0E0',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        <div>
+          <div style={{ fontSize: '0.68rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#AFAFAF', marginBottom: 4 }}>
+            📚 Bộ thẻ từ vựng
+          </div>
+          <div style={{ fontWeight: 900, fontSize: '1.1rem', color: '#3D3D3D' }}>Chọn bộ để học tiếp</div>
+        </div>
+        <button onClick={() => navigate('/flashcard/folders')} style={{
+          padding: '8px 16px', borderRadius: 12, border: 'none',
+          background: '#F5F5F5', color: '#AFAFAF', fontWeight: 800, fontSize: '0.78rem',
+          cursor: 'pointer', fontFamily: 'inherit', borderBottom: '3px solid #E0E0E0',
+        }}>
+          QUẢN LÝ
+        </button>
+      </div>
 
-        <ButtonBase
-          onClick={() => navigate('/flashcard/folders')}
-          sx={{
-            px: 2.4,
-            py: 1.2,
-            borderRadius: 4,
-            bgcolor: '#E5E5E5',
-            color: '#8A8A8A',
-            fontWeight: 900,
-            fontSize: '0.9rem',
-            borderBottom: '4px solid #D1D5DB',
-            transition: 'all 0.1s ease',
-            '&:hover': {
-              bgcolor: '#D1D5DB',
-              color: '#4B4B4B',
-            },
-            '&:active': {
-              borderBottomWidth: '0px',
-              transform: 'translateY(4px)',
-              mb: '4px',
-            },
-          }}
-        >
-          QUẢN LÝ BỘ
-        </ButtonBase>
-      </Box>
 
       {isLoading ? (
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))', xl: 'repeat(3, minmax(0, 1fr))' },
-            gap: 2,
-          }}
-        >
-          {[0, 1, 2].map((item) => (
-            <Skeleton key={item} variant="rounded" height={188} sx={{ borderRadius: 4 }} />
-          ))}
-        </Box>
-      ) : sortedFolders.length === 0 ? (
-        <Box
-          sx={{
-            borderRadius: 4,
-            border: '2px dashed #E5E5E5',
-            bgcolor: '#FAFAFA',
-            px: 3,
-            py: 4,
-            textAlign: 'center',
-          }}
-        >
-          <Typography fontSize="2.5rem">📚</Typography>
-          <Typography fontWeight={900} fontSize="1.2rem" sx={{ mt: 1, color: '#4B4B4B' }}>
-            Chưa có bộ thẻ nào
-          </Typography>
-          <Typography color="text.secondary" fontWeight={700} fontSize="0.95rem" sx={{ mt: 0.5 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
+          {[0, 1, 2].map(i => <Skeleton key={i} variant="rounded" height={160} sx={{ borderRadius: '16px' }} />)}
+        </div>
+      ) : sorted.length === 0 ? (
+        <div style={{
+          borderRadius: 16, border: '2px dashed #E0E0E0', background: '#FAFAFA',
+          padding: '40px 24px', textAlign: 'center',
+        }}>
+          <div style={{ fontSize: '2.2rem', marginBottom: 10 }}>📚</div>
+          <div style={{ fontWeight: 900, fontSize: '1rem', color: '#3D3D3D', marginBottom: 6 }}>Chưa có bộ thẻ nào</div>
+          <div style={{ fontSize: '0.83rem', fontWeight: 600, color: '#AFAFAF', marginBottom: 16 }}>
             Tạo bộ mới và bắt đầu ghi điểm ngay hôm nay!
-          </Typography>
-          <ButtonBase
-            onClick={() => navigate('/flashcard/folders')}
-            sx={{
-              mt: 2.5,
-              px: 3.5,
-              py: 1.5,
-              borderRadius: 4,
-              bgcolor: '#1CB0F6',
-              color: '#fff',
-              fontWeight: 900,
-              fontSize: '1rem',
-              borderBottom: '4px solid #1899D6',
-              transition: 'all 0.1s ease',
-              '&:active': {
-                borderBottomWidth: '0px',
-                transform: 'translateY(4px)',
-              },
-            }}
-          >
+          </div>
+          <button onClick={() => navigate('/flashcard/folders')} style={{
+            padding: '11px 24px', borderRadius: 12, border: 'none',
+            background: '#1CB0F6', color: '#fff', fontWeight: 900, fontSize: '0.88rem',
+            cursor: 'pointer', fontFamily: 'inherit', borderBottom: '4px solid #1899D6',
+          }}>
             TẠO BỘ ĐẦU TIÊN
-          </ButtonBase>
-        </Box>
+          </button>
+        </div>
       ) : (
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))', xl: 'repeat(3, minmax(0, 1fr))' },
-            gap: 2,
-          }}
-        >
-          {sortedFolders.map((folder) => {
-            const folderId = folder._id ?? folder.id;
-            const dueCount = folder.due_count ?? 0;
-            const totalCards = folder.flashcard_count ?? 0;
-            const isPriority = dueCount > 0;
-
-            const cardBorderColor = isPriority ? '#FF9600' : '#E5E5E5';
-            const cardBorderBottom = isPriority ? '#D87A00' : '#E5E5E5';
-            const cardBg = isPriority ? 'rgba(255, 150, 0, 0.05)' : '#fff';
-
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
+          {sorted.map(folder => {
+            const id    = folder._id ?? folder.id;
+            const due   = folder.due_count ?? 0;
+            const total = folder.flashcard_count ?? 0;
+            const hot   = due > 0;
             return (
-              <Box
-                key={folderId}
-                sx={{
-                  borderRadius: 4,
-                  p: 2.2,
-                  bgcolor: cardBg,
-                  border: `2px solid ${cardBorderColor}`,
-                  borderBottom: `4px solid ${cardBorderBottom}`,
-                  transition: 'transform 0.1s ease',
-                  '&:hover': {
-                    transform: 'translateY(-2px)',
-                  },
+              <div key={id}
+                style={{
+                  borderRadius: 16, padding: '14px 16px',
+                  background: hot ? '#FFFBF0' : '#FAFAFA',
+                  border: `2px solid ${hot ? '#FFD580' : '#F0F0F0'}`,
+                  borderBottom: `4px solid ${hot ? '#FF9600' : '#E0E0E0'}`,
+                  transition: 'transform 0.15s',
                 }}
+                onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+                onMouseLeave={e => e.currentTarget.style.transform = ''}
               >
-                <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 1.5 }}>
-                  <Box sx={{ minWidth: 0 }}>
-                    <Typography
-                      fontWeight={900}
-                      fontSize="1.1rem"
-                      color="#4B4B4B"
-                      sx={{
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {folder.title}
-                    </Typography>
-                    <Typography fontWeight={700} fontSize="0.85rem" color="text.secondary" sx={{ mt: 0.4 }}>
-                      {isPriority ? 'Sẵn sàng ôn' : 'Hàng ôn đang trống'}
-                    </Typography>
-                  </Box>
-
-                  <Box
-                    sx={{
-                      flexShrink: 0,
-                      px: 1.2,
-                      py: 0.65,
-                      borderRadius: 4,
-                      bgcolor: isPriority ? '#FF9600' : '#E5E5E5',
-                      color: isPriority ? '#fff' : '#AFAFAF',
-                      fontWeight: 900,
-                      fontSize: '0.75rem',
-                      letterSpacing: '0.05em',
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 10 }}>
+                  <div style={{ fontWeight: 900, fontSize: '0.95rem', color: '#3D3D3D', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                    {folder.title}
+                  </div>
+                  <span style={{
+                    flexShrink: 0, fontSize: '0.62rem', fontWeight: 900,
+                    background: hot ? '#FF9600' : '#E5E5E5', color: hot ? '#fff' : '#AFAFAF',
+                    borderRadius: 6, padding: '2px 7px',
+                  }}>
+                    {hot ? 'NÓNG' : 'NHÀN'}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
+                  <span style={{ fontSize: '0.78rem', fontWeight: 800, color: hot ? tokens.color.xp : '#AFAFAF' }}>🔥 {due} chờ</span>
+                  <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#AFAFAF' }}>📦 {total} tổng</span>
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    onClick={() => navigate(`/study?folderId=${id}`)}
+                    disabled={total === 0}
+                    style={{
+                      flex: 1, padding: '9px 0', borderRadius: 10, border: 'none',
+                      background: hot ? '#58CC02' : '#1CB0F6', color: '#fff',
+                      fontWeight: 900, fontSize: '0.8rem', fontFamily: 'inherit',
+                      cursor: total === 0 ? 'not-allowed' : 'pointer', opacity: total === 0 ? 0.5 : 1,
+                      borderBottom: `3px solid ${hot ? '#46A302' : '#1899D6'}`,
                     }}
-                  >
-                    {isPriority ? 'NÓNG' : 'NHÀN'}
-                  </Box>
-                </Box>
-
-                <Box sx={{ display: 'grid', gap: 1, mt: 2 }}>
-                  <Typography fontWeight={900} fontSize="0.95rem" color={isPriority ? '#FF9600' : '#AFAFAF'}>
-                    🔥 {dueCount} THẺ CHỜ
-                  </Typography>
-                  <Typography fontWeight={900} fontSize="0.95rem" color="#AFAFAF">
-                    📦 {totalCards} TỔNG
-                  </Typography>
-                </Box>
-
-                <Box sx={{ display: 'flex', gap: 1.2, mt: 2.4 }}>
-                  <ButtonBase
-                    onClick={() => navigate(`/study?folderId=${folderId}`)}
-                    disabled={totalCards === 0}
-                    sx={{
-                      flex: 1,
-                      px: 2.4,
-                      py: 1.4,
-                      borderRadius: 4,
-                      bgcolor: isPriority ? '#58CC02' : '#1CB0F6',
-                      color: '#fff',
-                      fontWeight: 900,
-                      fontSize: '0.9rem',
-                      opacity: totalCards === 0 ? 0.5 : 1,
-                      borderBottom: totalCards === 0 
-                        ? (isPriority ? '4px solid #46A302' : '4px solid #1899D6')
-                        : (isPriority ? '4px solid #46A302' : '4px solid #1899D6'),
-                      transition: 'all 0.1s ease',
-                      '&:active': totalCards === 0 ? {} : {
-                        borderBottomWidth: '0px',
-                        transform: 'translateY(4px)',
-                        mb: '4px',
-                      },
-                    }}
-                  >
-                    HỌC
-                  </ButtonBase>
-
-                  <ButtonBase
+                  >HỌC</button>
+                  <button
                     onClick={() => navigate('/flashcard/folders')}
-                    sx={{
-                      flex: 1,
-                      px: 2.4,
-                      py: 1.4,
-                      borderRadius: 4,
-                      bgcolor: '#fff',
-                      color: '#AFAFAF',
-                      fontWeight: 900,
-                      fontSize: '0.9rem',
-                      border: '2px solid #E5E5E5',
-                      borderBottom: '4px solid #E5E5E5',
-                      transition: 'all 0.1s ease',
-                      '&:active': {
-                        borderBottomWidth: '2px', // half push down
-                        transform: 'translateY(2px)',
-                        mb: '2px',
-                      },
+                    style={{
+                      flex: 1, padding: '9px 0', borderRadius: 10, fontFamily: 'inherit',
+                      background: '#fff', color: '#AFAFAF', fontWeight: 900, fontSize: '0.8rem',
+                      cursor: 'pointer', border: '1.5px solid #E0E0E0', borderBottom: '3px solid #E0E0E0',
                     }}
-                  >
-                    XEM
-                  </ButtonBase>
-                </Box>
-              </Box>
+                  >XEM</button>
+                </div>
+              </div>
             );
           })}
-        </Box>
+        </div>
       )}
-    </Box>
+    </div>
   );
 }

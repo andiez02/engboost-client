@@ -1,15 +1,5 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
-import {
-  Container,
-  Grid,
-  Snackbar,
-  Alert,
-  Box,
-  Button,
-  ButtonBase,
-  Typography,
-} from '@mui/material';
-import { useLocation, useNavigate } from 'react-router-dom';
+import React, { useState, useRef, useCallback } from 'react';
+import { Grid, Snackbar, Alert, Box, Button, Typography } from '@mui/material';import { useLocation, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import {
   snaplangDetectAPI,
@@ -24,7 +14,8 @@ import { useModal } from '../../../../../modal/ModalSystem/useModal';
 import GenerateDeck from '../Discover/GenerateDeck';
 import PhotoCameraOutlinedIcon from '@mui/icons-material/PhotoCameraOutlined';
 import AutoAwesomeOutlinedIcon from '@mui/icons-material/AutoAwesomeOutlined';
-import FloatingNotification from '../../../../../components/Feedback/FloatingNotification';
+import EditNoteIcon from '@mui/icons-material/EditNote';
+import ManualCreate from './components/ManualCreate';
 // import useFloatingNotification from '../../../../../hooks/useFloatingNotification';
 
 const CREATE_STREAK_DAYS_KEY = 'engboost_createflashcards_streak_days';
@@ -116,6 +107,10 @@ function Snaplang() {
   const [flashcards, setFlashcards] = useState([]);
   const [dragActive, setDragActive] = useState(false);
   const [savedFolderId, setSavedFolderId] = useState(null);
+  const [streakDays, setStreakDays] = useState(() => {
+    const raw = Number(localStorage.getItem(CREATE_STREAK_DAYS_KEY));
+    return Number.isFinite(raw) && raw > 0 ? raw : 1;
+  });
   const [alert, setAlert] = useState({
     open: false,
     message: '',
@@ -430,87 +425,76 @@ function Snaplang() {
   // }, [rewardData, showNotification]);
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      {/* <FloatingNotification
-        notification={notification}
-        onClose={hideNotification}
-      /> */}
+    <div>
+      {/* Description + mode switcher */}
+      <div style={{ marginBottom: 24 }}>
+        <div style={{ fontSize: '0.88rem', fontWeight: 600, color: '#AFAFAF', marginBottom: 16, maxWidth: 520 }}>
+          Tạo flashcards từ ảnh hoặc từ chủ đề bằng AI. Hãy làm 1 bước nhỏ để tiến bộ mỗi ngày.
+        </div>
 
-      {/* Header */}
-      <Box sx={{ mb: 4, display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap' }}>
-          <Box>
-            {/* <Typography variant="h4" sx={{ fontWeight: 950, color: '#0F172A', lineHeight: 1.1 }}>
-              Create Flashcards
-            </Typography> */}
-            <Typography sx={{ mt: 0.8, color: 'text.secondary', maxWidth: 520 }}>
-              Tạo flashcards từ ảnh hoặc từ chủ đề bằng AI. Hãy làm 1 bước nhỏ để tiến bộ mỗi ngày.
-            </Typography>
-          </Box>
-        </Box>
-
-        <Box
-          sx={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: 2,
-            mb: 2,
-          }}
-        >
-          <ButtonBase
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
             onClick={() => setMode('upload')}
-            sx={{
-              borderRadius: 3,
-              px: 3,
-              py: 1.5,
-              border: '2px solid',
-              borderColor: mode === 'upload' ? '#1CB0F6' : '#E5E5E5',
-              borderBottom: '4px solid',
-              borderBottomColor: mode === 'upload' ? '#1899D6' : '#E5E5E5',
-              bgcolor: mode === 'upload' ? '#DDF4FF' : '#fff',
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              padding: '9px 18px', borderRadius: 14,
+              fontSize: '0.8rem', fontWeight: 800, letterSpacing: '0.04em',
+              cursor: 'pointer', fontFamily: 'inherit',
+              transition: 'all 0.12s cubic-bezier(.4,0,.2,1)',
+              border: `2px solid ${mode === 'upload' ? '#1CB0F6' : '#E5E5E5'}`,
+              borderBottom: mode === 'upload' ? '2px solid #1899D6' : '4px solid #E0E0E0',
+              background: mode === 'upload' ? '#DDF4FF' : '#fff',
               color: mode === 'upload' ? '#1CB0F6' : '#AFAFAF',
-              transition: 'all 0.1s ease',
-              borderBottomWidth: mode === 'upload' ? '2px' : '4px',
               transform: mode === 'upload' ? 'translateY(2px)' : 'none',
-              marginBottom: mode === 'upload' ? '2px' : '0',
-              '&:hover': mode !== 'upload' ? { bgcolor: '#F7F7F7' } : {},
             }}
           >
-            <PhotoCameraOutlinedIcon sx={{ fontSize: 24, mr: 1 }} />
-            <Typography sx={{ fontWeight: 900, fontSize: '1rem' }}>
-              TẠO TỪ ẢNH
-            </Typography>
-          </ButtonBase>
+            <PhotoCameraOutlinedIcon sx={{ fontSize: 17 }} />
+            Tạo từ ảnh
+          </button>
 
-          <ButtonBase
+          <button
             onClick={() => setMode('ai')}
-            sx={{
-              borderRadius: 3,
-              px: 3,
-              py: 1.5,
-              border: '2px solid',
-              borderColor: mode === 'ai' ? '#CE82FF' : '#E5E5E5',
-              borderBottom: '4px solid',
-              borderBottomColor: mode === 'ai' ? '#A568CC' : '#E5E5E5',
-              bgcolor: mode === 'ai' ? '#F6E5FF' : '#fff',
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              padding: '9px 18px', borderRadius: 14,
+              fontSize: '0.8rem', fontWeight: 800, letterSpacing: '0.04em',
+              cursor: 'pointer', fontFamily: 'inherit',
+              transition: 'all 0.12s cubic-bezier(.4,0,.2,1)',
+              border: `2px solid ${mode === 'ai' ? '#CE82FF' : '#E5E5E5'}`,
+              borderBottom: mode === 'ai' ? '2px solid #A568CC' : '4px solid #E0E0E0',
+              background: mode === 'ai' ? '#F6E5FF' : '#fff',
               color: mode === 'ai' ? '#CE82FF' : '#AFAFAF',
-              transition: 'all 0.1s ease',
-              borderBottomWidth: mode === 'ai' ? '2px' : '4px',
               transform: mode === 'ai' ? 'translateY(2px)' : 'none',
-              marginBottom: mode === 'ai' ? '2px' : '0',
-              '&:hover': mode !== 'ai' ? { bgcolor: '#F7F7F7' } : {},
             }}
           >
-            <AutoAwesomeOutlinedIcon sx={{ fontSize: 24, mr: 1 }} />
-            <Typography sx={{ fontWeight: 900, fontSize: '1rem' }}>
-              TẠO BẰNG AI
-            </Typography>
-          </ButtonBase>
-        </Box>
-      </Box>
+            <AutoAwesomeOutlinedIcon sx={{ fontSize: 17 }} />
+            Tạo bằng AI
+          </button>
 
-      {/* Mode Content */}
-      {mode === 'upload' ? (
+          <button
+            onClick={() => setMode('manual')}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              padding: '9px 18px', borderRadius: 14,
+              fontSize: '0.8rem', fontWeight: 800, letterSpacing: '0.04em',
+              cursor: 'pointer', fontFamily: 'inherit',
+              transition: 'all 0.12s cubic-bezier(.4,0,.2,1)',
+              border: `2px solid ${mode === 'manual' ? '#58CC02' : '#E5E5E5'}`,
+              borderBottom: mode === 'manual' ? '2px solid #46A302' : '4px solid #E0E0E0',
+              background: mode === 'manual' ? '#D7FFB8' : '#fff',
+              color: mode === 'manual' ? '#46A302' : '#AFAFAF',
+              transform: mode === 'manual' ? 'translateY(2px)' : 'none',
+            }}
+          >
+            <EditNoteIcon sx={{ fontSize: 17 }} />
+            Tự tạo
+          </button>
+        </div>
+      </div>
+
+      {mode === 'manual' ? (
+        <ManualCreate />
+      ) : mode === 'upload' ? (
         <Grid container spacing={4}>
           {/* Left Column: Input Panel */}
           <Grid item xs={12} md={5}>
@@ -599,7 +583,7 @@ function Snaplang() {
           </Snackbar>
         </>
       ) : null}
-    </Container>
+    </div>
   );
 }
 

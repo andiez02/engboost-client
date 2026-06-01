@@ -45,6 +45,8 @@ function RegisterForm() {
     toast
       .promise(registerUserAPI({ email, password }), {
         pending: "Registration in progress...",
+        success: "Đăng ký thành công! Hãy đăng nhập để bắt đầu.",
+        error: "Đăng ký thất bại!",
       })
       .then((res) => {
         navigate(`/login?registeredEmail=${res.user.email}`);

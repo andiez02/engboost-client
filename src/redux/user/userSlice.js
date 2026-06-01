@@ -3,22 +3,28 @@ import { toast } from 'react-toastify';
 import authorizedAxiosInstance from '../../utils/authorizedAxios';
 import { API_ROOT } from '../../utils/constants';
 
-//Khởi tạo giá trị State của slice trong redux
 const initialState = {
   currentUser: null,
 };
 
-//Các hành động gọi API (bất đồng bộ) và cập nhật dữ liệu vào Redux, dùng Middleware createAsyncThunk đi kèm với extraReducer
 export const loginUserAPI = createAsyncThunk(
   'user/loginUserAPI',
   async (data) => {
-    const request = await authorizedAxiosInstance.post(
-      `${API_ROOT}/users/login`,
-      data
-    );
-    const response = request.data;
-    return response.data;
-  } 
+    const request = await authorizedAxiosInstance.post(`${API_ROOT}/users/login`, data);
+    return request.data.data;
+  }
+);
+
+export const fetchMeAPI = createAsyncThunk(
+  'user/fetchMeAPI',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await authorizedAxiosInstance.get(`${API_ROOT}/users/me`);
+      return response.data.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || 'Failed to fetch profile');
+    }
+  }
 );
 
 export const logoutUserAPI = createAsyncThunk(
@@ -66,9 +72,11 @@ export const userSlice = createSlice({
       state.currentUser = null;
     });
     builder.addCase(updateUserAPI.fulfilled, (state, action) => {
-      // response shape: { success: true, data: { id, email, username, ... } }
-      // preserve the same shape as login: { user: {...} }
       state.currentUser = { ...state.currentUser, user: action.payload.data };
+    });
+    builder.addCase(fetchMeAPI.fulfilled, (state, action) => {
+      // Merge full profile (avatar, username, level, xp, etc.) into currentUser
+      state.currentUser = { ...state.currentUser, user: action.payload };
     });
   },
 });

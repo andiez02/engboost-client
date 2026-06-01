@@ -33,7 +33,7 @@ export default function ShareModal({ open, onClose, folder }) {
     setLoading(false);
 
     if (createPost.fulfilled.match(result)) {
-      toast.success('Shared successfully 🚀');
+      toast.success('Đã đăng lên Discover 🚀');
       setContent('');
       onClose();
       navigate(routes.DISCOVER);
@@ -65,7 +65,7 @@ export default function ShareModal({ open, onClose, folder }) {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <ShareIcon sx={{ color: gamify.blue }} />
           <Typography sx={{ fontWeight: 800, fontSize: '1.1rem', color: gamify.text }}>
-            Share Folder
+            Chia sẻ lên Discover
           </Typography>
         </Box>
       </DialogTitle>
@@ -94,7 +94,7 @@ export default function ShareModal({ open, onClose, folder }) {
           fullWidth
           multiline
           rows={3}
-          placeholder="Add a caption (optional)..."
+          placeholder="Chú thích (tuỳ chọn)..."
           value={content}
           onChange={(e) => setContent(e.target.value)}
           slotProps={{ htmlInput: { maxLength: 500 } }}
@@ -122,7 +122,7 @@ export default function ShareModal({ open, onClose, folder }) {
             fontSize: '0.8rem',
           }}
         >
-          Cancel
+          Huỷ
         </Button>
         <Button
           variant="contained"
@@ -131,7 +131,7 @@ export default function ShareModal({ open, onClose, folder }) {
           startIcon={loading ? <CircularProgress size={16} color="inherit" /> : <ShareIcon />}
           sx={btn3d(gamify.blue, gamify.blueDark)}
         >
-          {loading ? 'Sharing...' : 'Share'}
+          {loading ? 'Đang đăng...' : 'Đăng lên Discover'}
         </Button>
       </DialogActions>
     </Dialog>

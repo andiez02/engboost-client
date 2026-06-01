@@ -3,9 +3,16 @@ import axios from 'axios';
 import { API_ROOT } from '../../utils/constants';
 
 const getPosts = async (params = {}) => {
-  // Feed is public — use plain axios (no auth required)
+  // Feed is public — use plain axios (no auth required); optional auth sends cookies for isLiked/isSaved
   const response = await axios.get(`${API_ROOT}/posts`, {
     params,
+    withCredentials: true,
+  });
+  return response.data;
+};
+
+const getPostById = async (postId) => {
+  const response = await axios.get(`${API_ROOT}/posts/${postId}`, {
     withCredentials: true,
   });
   return response.data;
@@ -38,6 +45,7 @@ const deletePost = async (postId) => {
 
 export const postService = {
   getPosts,
+  getPostById,
   likePost,
   unlikePost,
   savePost,

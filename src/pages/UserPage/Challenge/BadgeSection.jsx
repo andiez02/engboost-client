@@ -1,200 +1,117 @@
-import { Box, Typography, Tooltip } from '@mui/material';
+import { Tooltip } from '@mui/material';
 import { tokens } from '../../../theme';
 
 export default function BadgeSection({ achievements = [] }) {
-  if (!achievements || achievements.length === 0) {
-    return (
-      <Box sx={{ mt: 2, textAlign: 'center', p: 4, bgcolor: '#fff', borderRadius: '16px' }}>
-        <Typography sx={{ color: tokens.color.textSub }}>
-          Chưa có hệ thống huy hiệu!
-        </Typography>
-      </Box>
-    );
-  }
+  if (!achievements || achievements.length === 0) return null;
 
-  // Sort: unlocked first, then locked
-  const sortedBadges = [...achievements].sort(
-    (a, b) => Number(b.unlocked) - Number(a.unlocked)
-  );
-
-  const unlockedCount = achievements.filter((b) => b.unlocked).length;
-  const isAllUnlocked = unlockedCount === achievements.length && achievements.length > 0;
+  const sorted         = [...achievements].sort((a, b) => Number(b.unlocked) - Number(a.unlocked));
+  const unlockedCount  = achievements.filter(b => b.unlocked).length;
+  const allUnlocked    = unlockedCount === achievements.length;
 
   return (
-    <Box sx={{ mt: 2 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-        <span style={{ fontSize: '1.2rem' }}>🏆</span>
-        <Typography
-          sx={{
-            fontSize: '0.8rem',
-            fontWeight: 800,
-            textTransform: 'uppercase',
-            letterSpacing: '0.1em',
-            color: tokens.color.textSub,
-            flex: 1,
-          }}
-        >
+    <div>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+        <span style={{ fontSize: '1.1rem' }}>🏆</span>
+        <span style={{ fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#AFAFAF', flex: 1 }}>
           Huy hiệu của bạn
-        </Typography>
-        <Typography
-          sx={{
-            fontSize: '0.8rem',
-            fontWeight: 800,
-            color: tokens.color.text,
-          }}
-        >
+        </span>
+        <div style={{ flex: 1, height: 2, background: '#F0F0F0', borderRadius: 2 }} />
+        <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#3D3D3D' }}>
           {unlockedCount} / {achievements.length}
-        </Typography>
-      </Box>
+        </span>
+      </div>
 
-      {isAllUnlocked && (
-        <Box
-          sx={{
-            mb: 2,
-            py: 1.5,
-            px: 2,
-            bgcolor: tokens.color.successBg,
-            borderRadius: '12px',
-            textAlign: 'center',
-            border: `1.5px solid ${tokens.color.success}40`,
-          }}
-        >
-          <Typography sx={{ fontSize: '0.85rem', fontWeight: 700, color: tokens.color.success }}>
+      {allUnlocked && (
+        <div style={{
+          marginBottom: 14, padding: '10px 14px', borderRadius: 12, textAlign: 'center',
+          background: '#F0FDF4', border: '1.5px solid #86EFAC',
+        }}>
+          <span style={{ fontSize: '0.85rem', fontWeight: 700, color: tokens.color.success }}>
             🎉 Tuyệt đỉnh! Bạn đã thu thập đủ tất cả huy hiệu!
-          </Typography>
-        </Box>
+          </span>
+        </div>
       )}
 
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(3, 1fr)', md: 'repeat(4, 1fr)' },
-          gap: 2,
-        }}
-      >
-        {sortedBadges.map((badge) => (
-          <BadgeItem key={badge.id} badge={badge} />
-        ))}
-      </Box>
-    </Box>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))',
+        gap: 10,
+      }}>
+        {sorted.map(badge => <BadgeItem key={badge.id} badge={badge} />)}
+      </div>
+    </div>
   );
 }
 
 function BadgeItem({ badge }) {
-  // Use slight gold accent when unlocked
-  const bg = badge.unlocked ? '#FFF8E0' : '#F0F0F0';
-  const border = badge.unlocked ? '#FFD700' : '#D0D0D0';
-
   return (
     <Tooltip
       title={
-        <Box sx={{ textAlign: 'center', p: 0.5 }}>
-          <Typography sx={{ fontWeight: 800, fontSize: '0.85rem' }}>
-            {badge.title}
-          </Typography>
-          <Typography sx={{ fontSize: '0.75rem', opacity: 0.8, mt: 0.5 }}>
-            {badge.description}
-          </Typography>
+        <div style={{ textAlign: 'center', padding: 4 }}>
+          <div style={{ fontWeight: 800, fontSize: '0.85rem' }}>{badge.title}</div>
+          <div style={{ fontSize: '0.75rem', opacity: 0.8, marginTop: 4 }}>{badge.description}</div>
           {!badge.unlocked && (
-            <Typography sx={{ fontSize: '0.7rem', color: '#FFB84D', mt: 1, fontWeight: 700 }}>
-              🔒 Chưa mở khóa
-            </Typography>
+            <div style={{ fontSize: '0.7rem', color: '#FFB84D', marginTop: 6, fontWeight: 700 }}>🔒 Chưa mở khóa</div>
           )}
           {badge.unlocked && badge.unlocked_at && (
-            <Typography sx={{ fontSize: '0.65rem', color: tokens.color.success, mt: 1, fontWeight: 600 }}>
-              ✅ Đạt được: {new Date(badge.unlocked_at).toLocaleDateString('vi-VN')}
-            </Typography>
+            <div style={{ fontSize: '0.65rem', color: tokens.color.success, marginTop: 6, fontWeight: 600 }}>
+              ✅ {new Date(badge.unlocked_at).toLocaleDateString('vi-VN')}
+            </div>
           )}
-        </Box>
+        </div>
       }
       arrow
       placement="top"
     >
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 1.5,
-          p: 2,
-          borderRadius: '16px',
-          bgcolor: '#fff',
-          border: `2px solid ${badge.unlocked ? border + '50' : tokens.color.border}`,
-          opacity: badge.unlocked ? 1 : 0.6,
-          filter: badge.unlocked ? 'none' : 'grayscale(1)',
-          transition: 'all 0.2s ease',
-          cursor: 'help',
-          '&:hover': {
-            transform: 'translateY(-2px)',
-            boxShadow: tokens.shadow.sm,
-          },
-        }}
-      >
-        <Box sx={{ position: 'relative' }}>
-          <Box
-            sx={{
-              width: 56,
-              height: 56,
-              borderRadius: '50%',
-              bgcolor: bg,
-              border: `2px solid ${border}`,
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              boxShadow: badge.unlocked ? `0 4px 16px ${border}40` : 'none',
-              overflow: 'hidden',
-            }}
-          >
-            {/* If badge.icon contains http (is a url), use an img tag. Otherwise, just text emoji */}
+      <div style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+        padding: '14px 10px', borderRadius: 16, cursor: 'help',
+        background: '#fff',
+        border: `2px solid ${badge.unlocked ? '#FFD58080' : '#F0F0F0'}`,
+        borderBottom: `4px solid ${badge.unlocked ? '#FF9600' : '#E0E0E0'}`,
+        opacity: badge.unlocked ? 1 : 0.55,
+        filter: badge.unlocked ? 'none' : 'grayscale(1)',
+        transition: 'all 0.2s',
+      }}>
+        <div style={{ position: 'relative' }}>
+          <div style={{
+            width: 52, height: 52, borderRadius: '50%',
+            background: badge.unlocked ? '#FFF8E0' : '#F0F0F0',
+            border: `2px solid ${badge.unlocked ? '#FFD700' : '#D0D0D0'}`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: badge.unlocked ? '0 4px 12px #FFD70040' : 'none',
+            overflow: 'hidden',
+          }}>
             {badge.icon?.startsWith('http') ? (
               <img src={badge.icon} alt={badge.title} style={{ width: '60%', height: '60%', objectFit: 'contain' }} />
             ) : (
-              <span style={{ fontSize: '1.8rem' }}>{badge.icon || '🏆'}</span>
+              <span style={{ fontSize: '1.6rem' }}>{badge.icon || '🏆'}</span>
             )}
-          </Box>
+          </div>
           {!badge.unlocked && (
-            <Box
-              sx={{
-                position: 'absolute',
-                bottom: -4,
-                right: -4,
-                bgcolor: '#fff',
-                borderRadius: '50%',
-                p: 0.2,
-                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-              }}
-            >
-              <span style={{ fontSize: '1rem' }}>🔒</span>
-            </Box>
+            <div style={{
+              position: 'absolute', bottom: -4, right: -4,
+              background: '#fff', borderRadius: '50%', padding: 2,
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              fontSize: '0.85rem', lineHeight: 1,
+            }}>🔒</div>
           )}
-        </Box>
+        </div>
 
-        <Box sx={{ textAlign: 'center' }}>
-          <Typography
-            sx={{
-              fontSize: '0.75rem',
-              fontWeight: 800,
-              color: badge.unlocked ? tokens.color.text : tokens.color.textSub,
-              mb: 0.25,
-            }}
-          >
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '0.72rem', fontWeight: 800, color: badge.unlocked ? '#3D3D3D' : '#AFAFAF', marginBottom: 2 }}>
             {badge.title}
-          </Typography>
-          <Typography
-            sx={{
-              fontSize: '0.65rem',
-              fontWeight: 500,
-              color: tokens.color.textSub,
-              display: '-webkit-box',
-              overflow: 'hidden',
-              WebkitBoxOrient: 'vertical',
-              WebkitLineClamp: 2,
-            }}
-          >
+          </div>
+          <div style={{
+            fontSize: '0.62rem', fontWeight: 500, color: '#AFAFAF',
+            display: '-webkit-box', overflow: 'hidden',
+            WebkitBoxOrient: 'vertical', WebkitLineClamp: 2,
+          }}>
             {badge.description}
-          </Typography>
-        </Box>
-      </Box>
+          </div>
+        </div>
+      </div>
     </Tooltip>
   );
 }

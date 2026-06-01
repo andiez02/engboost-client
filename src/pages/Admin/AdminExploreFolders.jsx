@@ -1,37 +1,31 @@
 import { useState, useEffect, useCallback } from 'react';
-import {
-  Box, Typography, Button, TextField, Dialog, DialogTitle,
-  DialogContent, DialogActions, IconButton, Chip, CircularProgress,
-  Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Paper, Tooltip, InputAdornment, Drawer, Divider, List, ListItem,
-  ListItemText, Badge,
-} from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import LockOpenIcon from '@mui/icons-material/LockOpen';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import CloseIcon from '@mui/icons-material/Close';
-import StyleIcon from '@mui/icons-material/Style';
+import { CircularProgress, Dialog, Drawer, Pagination } from '@mui/material';
+import { FolderOpen, Plus, Pencil, Trash2, Eye, X, AlertTriangle, BookOpen } from 'lucide-react';
 import { adminFolderService } from '../../services/adminFolder/adminFolder.service';
 import { toast } from 'react-toastify';
+import AddFlashcardModal from './AddFlashcardModal';
 
-const EMPTY_FORM = { title: '', required_level: 1 };
+const ACCENT = '#6366F1';
+const ACCENT_BG = '#EEF2FF';
+const EMPTY_FORM = { title: '', required_level: 1, is_public: false };
+
+function levelStyle(lvl) {
+  if (lvl <= 3) return { bg: '#ECFDF5', color: '#059669', border: '#A7F3D0' };
+  if (lvl <= 7) return { bg: '#FFFBEB', color: '#D97706', border: '#FDE68A' };
+  return { bg: '#FEF2F2', color: '#DC2626', border: '#FECACA' };
+}
 
 export default function AdminExploreFolders() {
   const [folders, setFolders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
-  // Create / Edit dialog
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
 
-  // Delete confirm
   const [deleteTarget, setDeleteTarget] = useState(null);
 
-  // Flashcard detail drawer
   const [drawerFolder, setDrawerFolder] = useState(null);
   const [flashcards, setFlashcards] = useState([]);
   const [flashcardsLoading, setFlashcardsLoading] = useState(false);
@@ -50,7 +44,6 @@ export default function AdminExploreFolders() {
 
   useEffect(() => { fetchFolders(); }, [fetchFolders]);
 
-  /* ── Drawer ── */
   const openDrawer = async (folder) => {
     setDrawerFolder(folder);
     setFlashcards([]);
@@ -67,30 +60,55 @@ export default function AdminExploreFolders() {
 
   const closeDrawer = () => { setDrawerFolder(null); setFlashcards([]); };
 
-  /* ── Dialog helpers ── */
+  const [addForm, setAddForm] = useState({ english: '', vietnamese: '', pos: '', definition: '', example: '' });
+  const [addingFc, setAddingFc] = useState(false);
+
+  const handleAddFlashcard = async (formData) => {
+    if (!drawerFolder) return false;
+    setAddingFc(true);
+    try {
+      const res = await adminFolderService.addFlashcard(drawerFolder.id, formData);
+      setFlashcards(prev => [...prev, res.data]);
+      setFolders(prev => prev.map(f => f.id === drawerFolder.id ? { ...f, flashcard_count: (f.flashcard_count ?? 0) + 1 } : f));
+      setDrawerFolder(prev => ({ ...prev, flashcard_count: (prev.flashcard_count ?? 0) + 1 }));
+      toast.success('Đã thêm flashcard.');
+      return true;
+    } catch {
+      toast.error('Thêm flashcard thất bại.');
+      return false;
+    } finally {
+      setAddingFc(false);
+    }
+  };
+
+  const [addFcModalOpen, setAddFcModalOpen] = useState(false);
+
+  const handleDeleteFlashcard = async (fcId) => {
+    try {
+      await adminFolderService.deleteFlashcard(drawerFolder.id, fcId);
+      setFlashcards(prev => prev.filter(fc => fc.id !== fcId));
+      setFolders(prev => prev.map(f => f.id === drawerFolder.id ? { ...f, flashcard_count: Math.max(0, (f.flashcard_count ?? 1) - 1) } : f));
+      setDrawerFolder(prev => ({ ...prev, flashcard_count: Math.max(0, (prev.flashcard_count ?? 1) - 1) }));
+    } catch {
+      toast.error('Xóa flashcard thất bại.');
+    }
+  };
   const openCreate = () => { setEditTarget(null); setForm(EMPTY_FORM); setDialogOpen(true); };
   const openEdit = (folder) => {
     setEditTarget(folder);
-    setForm({ title: folder.title, required_level: folder.required_level ?? 1 });
+    setForm({ title: folder.title, required_level: folder.required_level ?? 1, is_public: folder.is_public ?? false });
     setDialogOpen(true);
   };
-  const closeDialog = () => { if (!submitting) setDialogOpen(false); };
 
   const handleSubmit = async () => {
     if (!form.title.trim()) return;
     setSubmitting(true);
     try {
       if (editTarget) {
-        await adminFolderService.updatePublicFolder(editTarget.id, {
-          title: form.title.trim(),
-          required_level: Number(form.required_level),
-        });
+        await adminFolderService.updatePublicFolder(editTarget.id, { title: form.title.trim(), required_level: Number(form.required_level), is_public: form.is_public });
         toast.success('Folder updated.');
       } else {
-        await adminFolderService.createPublicFolder({
-          title: form.title.trim(),
-          required_level: Number(form.required_level),
-        });
+        await adminFolderService.createPublicFolder({ title: form.title.trim(), required_level: Number(form.required_level), is_public: form.is_public });
         toast.success('Folder created.');
       }
       setDialogOpen(false);
@@ -118,286 +136,328 @@ export default function AdminExploreFolders() {
     }
   };
 
-  const levelColor = (lvl) => {
-    if (lvl <= 3) return { bg: '#dcfce7', color: '#16a34a' };
-    if (lvl <= 7) return { bg: '#fef9c3', color: '#ca8a04' };
-    return { bg: '#fee2e2', color: '#dc2626' };
-  };
-
   return (
-    <Box>
-      {/* Header */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 4 }}>
-        <Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-            <LockOpenIcon sx={{ color: '#6366f1' }} />
-            <Typography variant="h5" fontWeight={700} color="primary">
+    <div style={{ padding: 32, background: '#F8F9FA', minHeight: '100vh' }}>
+
+      {/* ── Header ── */}
+      <div style={{ marginBottom: 24, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: ACCENT_BG, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <FolderOpen size={18} color={ACCENT} />
+            </div>
+            <h1 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 800, color: '#111827', letterSpacing: '-0.02em' }}>
               Explore Folders
-            </Typography>
-          </Box>
-          <Typography variant="body2" color="text.secondary">
-            Manage public folders visible in the Explore tab (level-gated)
-          </Typography>
-        </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
+            </h1>
+          </div>
+          <p style={{ margin: 0, fontSize: '0.82rem', color: '#6B7280', fontWeight: 500 }}>
+            Thư mục công khai hiển thị trong tab Explore (yêu cầu cấp độ)
+          </p>
+        </div>
+
+        <button
           onClick={openCreate}
-          sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700 }}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            padding: '9px 18px', borderRadius: 10, cursor: 'pointer',
+            border: 'none', background: ACCENT,
+            fontSize: '0.82rem', fontWeight: 700, color: '#fff',
+            fontFamily: 'inherit', transition: 'opacity 0.15s',
+          }}
+          onMouseEnter={e => e.currentTarget.style.opacity = '0.88'}
+          onMouseLeave={e => e.currentTarget.style.opacity = '1'}
         >
-          New Folder
-        </Button>
-      </Box>
+          <Plus size={15} /> Tạo folder
+        </button>
+      </div>
 
-      {/* Table */}
-      {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-          <CircularProgress />
-        </Box>
-      ) : (
-        <TableContainer component={Paper} sx={{ borderRadius: 3, boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
-          <Table>
-            <TableHead>
-              <TableRow sx={{ bgcolor: '#f8fafc' }}>
-                <TableCell sx={{ fontWeight: 700 }}>Title</TableCell>
-                <TableCell sx={{ fontWeight: 700 }} align="center">Cards</TableCell>
-                <TableCell sx={{ fontWeight: 700 }} align="center">Required Level</TableCell>
-                <TableCell sx={{ fontWeight: 700 }} align="center">Status</TableCell>
-                <TableCell sx={{ fontWeight: 700 }} align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {folders.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 6, color: 'text.secondary' }}>
-                    No explore folders yet. Create one to get started.
-                  </TableCell>
-                </TableRow>
-              )}
-              {folders.map((folder) => {
-                const lc = levelColor(folder.required_level ?? 1);
-                return (
-                  <TableRow
-                    key={folder.id}
-                    hover
-                    sx={{ cursor: 'pointer', bgcolor: drawerFolder?.id === folder.id ? '#f0f9ff' : 'inherit' }}
-                    onClick={() => openDrawer(folder)}
-                  >
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <StyleIcon sx={{ color: '#6366f1', fontSize: 18 }} />
-                        <Typography fontWeight={600}>{folder.title}</Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell align="center">
-                      <Badge badgeContent={folder.flashcard_count ?? 0} color="primary" showZero />
-                    </TableCell>
-                    <TableCell align="center">
-                      <Chip
-                        label={`Level ${folder.required_level ?? 1}+`}
-                        size="small"
-                        sx={{ bgcolor: lc.bg, color: lc.color, fontWeight: 700 }}
-                      />
-                    </TableCell>
-                    <TableCell align="center">
-                      <Chip label="Public" size="small" sx={{ bgcolor: '#dcfce7', color: '#16a34a', fontWeight: 700 }} />
-                    </TableCell>
-                    <TableCell align="right" onClick={(e) => e.stopPropagation()}>
-                      <Tooltip title="View flashcards">
-                        <IconButton size="small" onClick={() => openDrawer(folder)} sx={{ color: '#6366f1' }}>
-                          <VisibilityIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Edit">
-                        <IconButton size="small" onClick={() => openEdit(folder)} sx={{ color: '#0ea5e9' }}>
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Delete">
-                        <IconButton size="small" onClick={() => setDeleteTarget(folder)} sx={{ color: '#ef4444' }}>
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
+      {/* ── Table ── */}
+      <div style={{ background: '#fff', borderRadius: 16, border: '1.5px solid #E5E7EB', overflow: 'hidden' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr style={{ borderBottom: '1.5px solid #F3F4F6' }}>
+              {['Tên folder', 'Số thẻ', 'Cấp yêu cầu', 'Trạng thái', ''].map((h) => (
+                <th key={h} style={{ padding: '12px 16px', textAlign: h === 'Số thẻ' || h === 'Cấp yêu cầu' || h === 'Trạng thái' ? 'center' : 'left', fontSize: '0.72rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#9CA3AF' }}>
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr>
+                <td colSpan={5} style={{ padding: '48px 0', textAlign: 'center' }}>
+                  <CircularProgress size={24} sx={{ color: ACCENT }} />
+                </td>
+              </tr>
+            ) : folders.length === 0 ? (
+              <tr>
+                <td colSpan={5} style={{ padding: '48px 0', textAlign: 'center', color: '#9CA3AF', fontSize: '0.85rem', fontWeight: 600 }}>
+                  Chưa có folder nào. Tạo folder đầu tiên để bắt đầu.
+                </td>
+              </tr>
+            ) : folders.map((folder, i) => {
+              const ls = levelStyle(folder.required_level ?? 1);
+              const isActive = drawerFolder?.id === folder.id;
+              return (
+                <tr key={folder.id}
+                  style={{ borderBottom: i < folders.length - 1 ? '1px solid #F9FAFB' : 'none', background: isActive ? ACCENT_BG : '#fff', cursor: 'pointer', transition: 'background 0.1s' }}
+                  onClick={() => openDrawer(folder)}
+                  onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = '#FAFAFA'; }}
+                  onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = '#fff'; }}
+                >
+                  <td style={{ padding: '12px 16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{ width: 30, height: 30, borderRadius: 8, background: ACCENT_BG, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <FolderOpen size={14} color={ACCENT} />
+                      </div>
+                      <span style={{ fontSize: '0.88rem', fontWeight: 700, color: '#111827' }}>{folder.title}</span>
+                    </div>
+                  </td>
+                  <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#374151' }}>{folder.flashcard_count ?? 0}</span>
+                  </td>
+                  <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 10px', borderRadius: 999, fontSize: '0.72rem', fontWeight: 700, background: ls.bg, color: ls.color, border: `1.5px solid ${ls.border}` }}>
+                      Lv. {folder.required_level ?? 1}+
+                    </span>
+                  </td>
+                  <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                    <span
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        const newVal = !folder.is_public;
+                        setFolders(prev => prev.map(f => f.id === folder.id ? { ...f, is_public: newVal } : f));
+                        if (drawerFolder?.id === folder.id) setDrawerFolder(prev => ({ ...prev, is_public: newVal }));
+                        try { await adminFolderService.updatePublicFolder(folder.id, { is_public: newVal }); }
+                        catch { setFolders(prev => prev.map(f => f.id === folder.id ? { ...f, is_public: !newVal } : f)); }
+                      }}
+                      title="Click để đổi trạng thái"
+                      style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 10px', borderRadius: 999, fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s',
+                        background: folder.is_public ? '#ECFDF5' : '#F3F4F6',
+                        color: folder.is_public ? '#059669' : '#6B7280',
+                        border: `1.5px solid ${folder.is_public ? '#A7F3D0' : '#E5E7EB'}`,
+                      }}>
+                      {folder.is_public ? '🟢 Public' : '⚫ Private'}
+                    </span>
+                  </td>
+                  <td style={{ padding: '12px 16px' }} onClick={e => e.stopPropagation()}>
+                    <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
+                      {[
+                        { icon: <Eye size={13} color={ACCENT} />, action: () => openDrawer(folder), hover: { border: ACCENT, bg: ACCENT_BG } },
+                        { icon: <Pencil size={13} color="#0EA5E9" />, action: () => openEdit(folder), hover: { border: '#0EA5E9', bg: '#F0F9FF' } },
+                        { icon: <Trash2 size={13} color="#EF4444" />, action: () => setDeleteTarget(folder), hover: { border: '#EF4444', bg: '#FEF2F2' } },
+                      ].map((btn, bi) => (
+                        <button key={bi} onClick={btn.action}
+                          style={{ width: 30, height: 30, borderRadius: 8, border: '1.5px solid #E5E7EB', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
+                          onMouseEnter={e => { e.currentTarget.style.borderColor = btn.hover.border; e.currentTarget.style.background = btn.hover.bg; }}
+                          onMouseLeave={e => { e.currentTarget.style.borderColor = '#E5E7EB'; e.currentTarget.style.background = '#fff'; }}
+                        >
+                          {btn.icon}
+                        </button>
+                      ))}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
 
-      {/* ── Flashcard Detail Drawer ── */}
-      <Drawer
-        anchor="right"
-        open={!!drawerFolder}
-        onClose={closeDrawer}
-        PaperProps={{ sx: { width: { xs: '100%', sm: 420 }, p: 0 } }}
-      >
+      {/* ── Flashcard Drawer ── */}
+      <Drawer anchor="right" open={!!drawerFolder} onClose={closeDrawer}
+        PaperProps={{ sx: { width: { xs: '100%', sm: 400 }, p: 0, background: '#F8F9FA' } }}>
         {drawerFolder && (
-          <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
             {/* Drawer header */}
-            <Box sx={{ px: 3, py: 2.5, borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <StyleIcon sx={{ color: '#6366f1' }} />
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography fontWeight={800} noWrap>{drawerFolder.title}</Typography>
-                <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
-                  <Chip
-                    label={`Level ${drawerFolder.required_level ?? 1}+`}
-                    size="small"
-                    sx={{ ...levelColor(drawerFolder.required_level ?? 1), fontWeight: 700, fontSize: '0.7rem' }}
-                  />
-                  <Chip
-                    label={`${drawerFolder.flashcard_count ?? 0} cards`}
-                    size="small"
-                    sx={{ bgcolor: '#eef2ff', color: '#6366f1', fontWeight: 700, fontSize: '0.7rem' }}
-                  />
-                </Box>
-              </Box>
-              <IconButton size="small" onClick={closeDrawer}>
-                <CloseIcon />
-              </IconButton>
-            </Box>
+            <div style={{ padding: '20px 20px 16px', background: '#fff', borderBottom: '1.5px solid #E5E7EB', display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 38, height: 38, borderRadius: 10, background: ACCENT_BG, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <FolderOpen size={17} color={ACCENT} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{drawerFolder.title}</div>
+                <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
+                  {(() => { const ls = levelStyle(drawerFolder.required_level ?? 1); return (
+                    <span style={{ padding: '1px 8px', borderRadius: 999, fontSize: '0.68rem', fontWeight: 700, background: ls.bg, color: ls.color, border: `1.5px solid ${ls.border}` }}>
+                      Lv. {drawerFolder.required_level ?? 1}+
+                    </span>
+                  ); })()}
+                  <span style={{ padding: '1px 8px', borderRadius: 999, fontSize: '0.68rem', fontWeight: 700, background: ACCENT_BG, color: ACCENT, border: `1.5px solid #C7D2FE` }}>
+                    {drawerFolder.flashcard_count ?? 0} thẻ
+                  </span>
+                </div>
+              </div>
+              <button onClick={closeDrawer} style={{ width: 30, height: 30, borderRadius: 8, border: '1.5px solid #E5E7EB', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <X size={14} color="#6B7280" />
+              </button>
+            </div>
 
             {/* Flashcard list */}
-            <Box sx={{ flex: 1, overflow: 'auto', px: 2, py: 2 }}>
+            <div style={{ flex: 1, overflow: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+              {/* Add button */}
+              <button
+                onClick={() => setAddFcModalOpen(true)}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px', borderRadius: 10, border: `1.5px dashed ${ACCENT}`, background: ACCENT_BG, color: ACCENT, fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}
+                onMouseEnter={e => { e.currentTarget.style.background = '#E0E7FF'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = ACCENT_BG; }}
+              >
+                <Plus size={14} /> Thêm flashcard
+              </button>
+
+              {/* List */}
               {flashcardsLoading ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-                  <CircularProgress size={28} />
-                </Box>
+                <div style={{ display: 'flex', justifyContent: 'center', padding: '32px 0' }}>
+                  <CircularProgress size={24} sx={{ color: ACCENT }} />
+                </div>
               ) : flashcards.length === 0 ? (
-                <Box sx={{ textAlign: 'center', py: 6, color: 'text.secondary' }}>
-                  <StyleIcon sx={{ fontSize: 40, mb: 1, opacity: 0.3 }} />
-                  <Typography variant="body2">No flashcards in this folder.</Typography>
-                </Box>
+                <div style={{ textAlign: 'center', padding: '32px 0', color: '#9CA3AF' }}>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>Chưa có flashcard nào.</div>
+                </div>
               ) : (
-                <List disablePadding sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {flashcards.map((fc, idx) => (
-                    <ListItem
-                      key={fc.id}
-                      disablePadding
-                      sx={{
-                        borderRadius: 2,
-                        border: '1px solid #e2e8f0',
-                        bgcolor: '#fff',
-                        px: 2,
-                        py: 1.5,
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        gap: 1.5,
-                      }}
-                    >
-                      <Typography sx={{ fontSize: '0.75rem', fontWeight: 900, color: '#94a3b8', minWidth: 24, pt: 0.2 }}>
-                        {idx + 1}
-                      </Typography>
-                      <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Typography fontWeight={700} fontSize="0.9rem" color="#1e293b">
-                          {fc.english}
-                        </Typography>
-                        <Typography fontSize="0.82rem" color="#64748b" mt={0.3}>
-                          {fc.vietnamese}
-                        </Typography>
-                      </Box>
-                    </ListItem>
+                    <div key={fc.id} style={{ background: '#fff', borderRadius: 12, border: '1.5px solid #E5E7EB', padding: '10px 12px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                      <span style={{ fontSize: '0.7rem', fontWeight: 900, color: '#D1D5DB', minWidth: 18, paddingTop: 2 }}>{idx + 1}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#111827' }}>{fc.english}</span>
+                          {fc.pos && <span style={{ fontSize: '0.68rem', fontWeight: 700, color: ACCENT, background: ACCENT_BG, padding: '1px 7px', borderRadius: 999 }}>{fc.pos}</span>}
+                        </div>
+                        {fc.vietnamese && <div style={{ fontSize: '0.8rem', color: '#374151', fontWeight: 600, marginTop: 2 }}>{fc.vietnamese}</div>}
+                        {fc.definition && <div style={{ fontSize: '0.75rem', color: '#6B7280', marginTop: 2, fontStyle: 'italic' }}>{fc.definition}</div>}
+                        {fc.example && <div style={{ fontSize: '0.75rem', color: '#9CA3AF', marginTop: 2 }}>"{fc.example}"</div>}
+                      </div>
+                      <button
+                        onClick={() => handleDeleteFlashcard(fc.id)}
+                        style={{ width: 26, height: 26, borderRadius: 7, border: '1.5px solid #E5E7EB', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.15s' }}
+                        onMouseEnter={e => { e.currentTarget.style.borderColor = '#EF4444'; e.currentTarget.style.background = '#FEF2F2'; }}
+                        onMouseLeave={e => { e.currentTarget.style.borderColor = '#E5E7EB'; e.currentTarget.style.background = '#fff'; }}
+                      >
+                        <Trash2 size={11} color="#EF4444" />
+                      </button>
+                    </div>
                   ))}
-                </List>
+                </div>
               )}
-            </Box>
+            </div>
 
             {/* Drawer footer */}
-            <Box sx={{ px: 3, py: 2, borderTop: '1px solid #e2e8f0', display: 'flex', gap: 1 }}>
-              <Button
-                variant="outlined"
-                startIcon={<EditIcon />}
-                onClick={() => { openEdit(drawerFolder); }}
-                sx={{ flex: 1, textTransform: 'none', fontWeight: 700, borderRadius: 2 }}
-              >
-                Edit
-              </Button>
-              <Button
-                variant="outlined"
-                color="error"
-                startIcon={<DeleteIcon />}
-                onClick={() => setDeleteTarget(drawerFolder)}
-                sx={{ flex: 1, textTransform: 'none', fontWeight: 700, borderRadius: 2 }}
-              >
-                Delete
-              </Button>
-            </Box>
-          </Box>
+            <div style={{ padding: '12px 16px', background: '#fff', borderTop: '1.5px solid #E5E7EB', display: 'flex', gap: 8 }}>
+              <button onClick={() => openEdit(drawerFolder)}
+                style={{ flex: 1, padding: '9px', borderRadius: 10, border: `1.5px solid ${ACCENT}`, background: ACCENT_BG, color: ACCENT, fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                <Pencil size={13} /> Chỉnh sửa
+              </button>
+              <button onClick={() => setDeleteTarget(drawerFolder)}
+                style={{ flex: 1, padding: '9px', borderRadius: 10, border: '1.5px solid #FECACA', background: '#FEF2F2', color: '#EF4444', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                <Trash2 size={13} /> Xóa
+              </button>
+            </div>
+          </div>
         )}
       </Drawer>
 
-      {/* Create / Edit Dialog */}
-      <Dialog open={dialogOpen} onClose={closeDialog} maxWidth="xs" fullWidth
-        PaperProps={{ sx: { borderRadius: 3 } }}>
-        <DialogTitle sx={{ fontWeight: 700 }}>
-          {editTarget ? 'Edit Folder' : 'Create Explore Folder'}
-        </DialogTitle>
-        <DialogContent sx={{ pt: '12px !important', display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <TextField
-            label="Folder Title"
-            fullWidth
-            value={form.title}
-            onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-            inputProps={{ maxLength: 30 }}
-            helperText={`${form.title.length}/30`}
-            autoFocus
-          />
-          <TextField
-            label="Required Level"
-            type="number"
-            fullWidth
-            value={form.required_level}
-            onChange={(e) => setForm((f) => ({ ...f, required_level: Math.max(1, Number(e.target.value)) }))}
-            InputProps={{
-              startAdornment: <InputAdornment position="start">Lv.</InputAdornment>,
-              inputProps: { min: 1 },
-            }}
-            helperText="Users must reach this level to unlock the folder"
-          />
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
-          <Button onClick={closeDialog} disabled={submitting} sx={{ textTransform: 'none' }}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleSubmit}
-            disabled={submitting || !form.title.trim()}
-            startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : null}
-            sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2 }}
-          >
-            {editTarget ? 'Save Changes' : 'Create'}
-          </Button>
-        </DialogActions>
+      {/* ── Create / Edit Dialog ── */}
+      <Dialog open={dialogOpen} onClose={() => !submitting && setDialogOpen(false)} maxWidth="xs" fullWidth
+        PaperProps={{ sx: { borderRadius: 4, border: '1.5px solid #E5E7EB', boxShadow: '0 24px 64px rgba(0,0,0,0.1)', p: 0 } }}>
+        <div style={{ padding: '20px 24px 16px', borderBottom: '1.5px solid #F3F4F6' }}>
+          <div style={{ fontSize: '1rem', fontWeight: 800, color: '#111827' }}>{editTarget ? 'Chỉnh sửa folder' : 'Tạo Explore Folder'}</div>
+        </div>
+        <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div>
+            <div style={{ marginBottom: 6, fontSize: '0.72rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#9CA3AF' }}>Tên folder</div>
+            <input
+              autoFocus
+              value={form.title}
+              onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
+              maxLength={30}
+              placeholder="VD: IELTS Vocabulary..."
+              style={{ width: '100%', padding: '9px 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: '0.88rem', fontWeight: 600, color: '#111827', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }}
+              onFocus={e => e.target.style.borderColor = ACCENT}
+              onBlur={e => e.target.style.borderColor = '#E5E7EB'}
+            />
+            <div style={{ marginTop: 4, fontSize: '0.7rem', color: '#9CA3AF', textAlign: 'right' }}>{form.title.length}/30</div>
+          </div>
+          <div>
+            <div style={{ marginBottom: 6, fontSize: '0.72rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#9CA3AF' }}>Cấp độ yêu cầu</div>
+            <input
+              type="number"
+              min={1}
+              value={form.required_level}
+              onChange={e => setForm(f => ({ ...f, required_level: Math.max(1, Number(e.target.value)) }))}
+              style={{ width: '100%', padding: '9px 12px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: '0.88rem', fontWeight: 600, color: '#111827', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }}
+              onFocus={e => e.target.style.borderColor = ACCENT}
+              onBlur={e => e.target.style.borderColor = '#E5E7EB'}
+            />
+            <div style={{ marginTop: 4, fontSize: '0.7rem', color: '#9CA3AF' }}>Người dùng phải đạt cấp này để mở khóa folder</div>
+          </div>
+          <div>
+            <div style={{ marginBottom: 8, fontSize: '0.72rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#9CA3AF' }}>Trạng thái</div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {[{ val: true, label: '🟢 Public', desc: 'User có thể thấy' }, { val: false, label: '⚫ Private', desc: 'Chỉ admin thấy' }].map(({ val, label, desc }) => (
+                <button key={String(val)} onClick={() => setForm(f => ({ ...f, is_public: val }))}
+                  style={{ flex: 1, padding: '8px', borderRadius: 10, cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.8rem', fontWeight: 700, transition: 'all 0.15s',
+                    border: `1.5px solid ${form.is_public === val ? (val ? '#059669' : '#6366F1') : '#E5E7EB'}`,
+                    background: form.is_public === val ? (val ? '#ECFDF5' : '#EEF2FF') : '#fff',
+                    color: form.is_public === val ? (val ? '#059669' : '#6366F1') : '#6B7280',
+                  }}>
+                  {label}<div style={{ fontSize: '0.68rem', fontWeight: 500, marginTop: 2 }}>{desc}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div style={{ padding: '0 24px 20px', display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+          <button onClick={() => setDialogOpen(false)} disabled={submitting}
+            style={{ padding: '9px 18px', borderRadius: 10, border: '1.5px solid #E5E7EB', background: '#fff', fontSize: '0.82rem', fontWeight: 700, color: '#374151', cursor: 'pointer', fontFamily: 'inherit' }}>
+            Hủy
+          </button>
+          <button onClick={handleSubmit} disabled={submitting || !form.title.trim()}
+            style={{ padding: '9px 18px', borderRadius: 10, border: 'none', background: form.title.trim() && !submitting ? ACCENT : '#E5E7EB', fontSize: '0.82rem', fontWeight: 700, color: form.title.trim() && !submitting ? '#fff' : '#9CA3AF', cursor: form.title.trim() && !submitting ? 'pointer' : 'not-allowed', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6 }}>
+            {submitting && <CircularProgress size={13} sx={{ color: '#fff' }} />}
+            {editTarget ? 'Lưu thay đổi' : 'Tạo folder'}
+          </button>
+        </div>
       </Dialog>
 
-      {/* Delete Confirm Dialog */}
-      <Dialog open={!!deleteTarget} onClose={() => !submitting && setDeleteTarget(null)}
-        maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
-        <DialogTitle sx={{ fontWeight: 700 }}>Delete Folder?</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" color="text.secondary">
-            <strong>"{deleteTarget?.title}"</strong> and all its flashcards will be permanently deleted.
-          </Typography>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
-          <Button onClick={() => setDeleteTarget(null)} disabled={submitting} sx={{ textTransform: 'none' }}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={handleDelete}
-            disabled={submitting}
-            startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : <DeleteIcon />}
-            sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2 }}
-          >
-            Delete
-          </Button>
-        </DialogActions>
+      {/* ── Delete Dialog ── */}
+      <Dialog open={!!deleteTarget} onClose={() => !submitting && setDeleteTarget(null)} maxWidth="xs" fullWidth
+        PaperProps={{ sx: { borderRadius: 4, border: '1.5px solid #E5E7EB', boxShadow: '0 24px 64px rgba(0,0,0,0.1)', p: 0 } }}>
+        <div style={{ padding: '20px 24px 16px', borderBottom: '1.5px solid #F3F4F6', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: '#FEF2F2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <AlertTriangle size={18} color="#EF4444" />
+          </div>
+          <div style={{ fontSize: '1rem', fontWeight: 800, color: '#111827' }}>Xác nhận xóa</div>
+        </div>
+        <div style={{ padding: '20px 24px' }}>
+          <p style={{ margin: '0 0 12px', fontSize: '0.85rem', color: '#374151', fontWeight: 500 }}>
+            Folder <strong>"{deleteTarget?.title}"</strong> và tất cả flashcard bên trong sẽ bị xóa vĩnh viễn.
+          </p>
+          <div style={{ padding: '10px 14px', borderRadius: 10, background: '#FEF2F2', border: '1.5px solid #FECACA', fontSize: '0.8rem', color: '#DC2626', fontWeight: 600 }}>
+            ⚠️ Hành động này không thể hoàn tác.
+          </div>
+        </div>
+        <div style={{ padding: '0 24px 20px', display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+          <button onClick={() => setDeleteTarget(null)} disabled={submitting}
+            style={{ padding: '9px 18px', borderRadius: 10, border: '1.5px solid #E5E7EB', background: '#fff', fontSize: '0.82rem', fontWeight: 700, color: '#374151', cursor: 'pointer', fontFamily: 'inherit' }}>
+            Hủy
+          </button>
+          <button onClick={handleDelete} disabled={submitting}
+            style={{ padding: '9px 18px', borderRadius: 10, border: 'none', background: '#EF4444', fontSize: '0.82rem', fontWeight: 700, color: '#fff', cursor: submitting ? 'not-allowed' : 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6, opacity: submitting ? 0.7 : 1 }}>
+            {submitting && <CircularProgress size={13} sx={{ color: '#fff' }} />}
+            Xóa
+          </button>
+        </div>
       </Dialog>
-    </Box>
+
+      {/* ── Add Flashcard Modal ── */}
+      <AddFlashcardModal
+        open={addFcModalOpen}
+        onClose={() => setAddFcModalOpen(false)}
+        onAdd={handleAddFlashcard}
+        loading={addingFc}
+      />
+    </div>
   );
 }

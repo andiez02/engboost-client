@@ -15,7 +15,8 @@ import Typography from '@mui/material/Typography';
 import ButtonBase from '@mui/material/ButtonBase';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { logoutUserAPI, selectCurrentUser } from '../../redux/user/userSlice';
+import { logoutUserAPI, selectCurrentUser, fetchMeAPI } from '../../redux/user/userSlice';
+import { fetchStats } from '../../redux/study/studySlice';
 
 function Profiles() {
   const anchorRef = React.useRef(null);
@@ -27,14 +28,22 @@ function Profiles() {
   const currentUser = useSelector(selectCurrentUser);
   const stats = useSelector((state) => state.study.stats);
 
-  const xp = stats?.xp ?? 0;
-  const level = stats?.level ?? 1;
-  const streak = stats?.streak ?? 0;
+  // Fetch stats and full profile on mount if not yet loaded
+  React.useEffect(() => {
+    if (!stats) dispatch(fetchStats());
+    if (!currentUser?.user?.avatar && currentUser?.user?.id) dispatch(fetchMeAPI());
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const xp = stats?.xp ?? currentUser?.user?.xp ?? 0;
+  const level = stats?.level ?? currentUser?.user?.level ?? 1;
+  const streak = stats?.streak ?? currentUser?.user?.streak ?? 0;
   const xpForNextLevel = stats?.xpForNextLevel ?? 10;
   const xpForCurrentLevel = stats?.xpForCurrentLevel ?? 0;
   const xpInLevel = xp - xpForCurrentLevel;
   const xpNeeded = xpForNextLevel - xpForCurrentLevel;
   const xpProgress = xpNeeded > 0 ? Math.min((xpInLevel / xpNeeded) * 100, 100) : 0;
+  const avatar = currentUser?.user?.avatar || null;
   const username =
     currentUser?.user?.username ||
     currentUser?.user?.email?.split('@')[0] ||
@@ -101,7 +110,7 @@ function Profiles() {
                   boxShadow: '0 0 0 2px #fff',
                 }}
                 alt={username}
-                src={currentUser?.user?.avatar}
+                src={avatar}
               />
               {/* Level badge */}
               <Box
@@ -158,7 +167,7 @@ function Profiles() {
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                       <Avatar
                         sx={{ width: 42, height: 42, border: '2px solid #E5E5E5' }}
-                        src={currentUser?.user?.avatar}
+                        src={avatar}
                       />
                       <Box sx={{ flex: 1, minWidth: 0 }}>
                         <Typography fontWeight={800} fontSize="0.9rem" color="#4B4B4B" noWrap>

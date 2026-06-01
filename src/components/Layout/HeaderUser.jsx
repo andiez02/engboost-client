@@ -1,9 +1,10 @@
 import { X, Menu, ArrowLeft } from 'lucide-react';
 import engboostLogo from '../../assets/home/engboost-logo.png';
 import Profiles from '../AppBar/Profile';
+import NotificationBell from '../Notifications/NotificationBell';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-function HeaderAdmin({ isSidebarOpen, setIsSidebarOpen }) {
+function HeaderUser({ isSidebarOpen, setIsSidebarOpen }) {
   const navigate = useNavigate();
   const location = useLocation();
   const isSettingsPage = location.pathname.includes('/admin/settings');
@@ -47,11 +48,12 @@ function HeaderAdmin({ isSidebarOpen, setIsSidebarOpen }) {
         </div>
       </div>
 
-      <div className="flex items-center">
+      <div className="flex items-center gap-1">
+        <NotificationBell />
         <Profiles />
       </div>
     </header>
   );
 }
 
-export default HeaderAdmin;
+export default HeaderUser;

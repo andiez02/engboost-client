@@ -26,7 +26,7 @@ const challengeSlice = createSlice({
       // Sync challenges when app fetches user stats
       .addCase(fetchStats.fulfilled, (state, action) => {
         if (action.payload?.challenges) {
-          state.challenges = action.payload.challenges;
+          state.challenges = [...action.payload.challenges].sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0));
         }
       })
       // Reactively update progress when study review is submitted

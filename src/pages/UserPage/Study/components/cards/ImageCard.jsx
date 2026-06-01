@@ -24,9 +24,20 @@ export default function ImageCard({
   const [isCorrect, setCorrect] = useState(false);
   const controls = useAnimation();
 
+  useEffect(() => {
+    if (lastRating === null || lastRating === undefined) return;
+    const anims = {
+      0: { x: [-4, 4, -4, 4, 0], transition: { duration: 0.25 } },
+      1: { scale: [1, 1.02, 1], transition: { duration: 0.2 } },
+      2: { scale: [1, 1.02, 1], transition: { duration: 0.2 } },
+      3: { scale: [1, 1.03, 1], transition: { duration: 0.25 } },
+    };
+    if (anims[lastRating]) controls.start(anims[lastRating]);
+  }, [lastRating, controls]);
+
   if (!card) return null;
 
-  const imageUrl = card.lexicalEntry?.imageUrl;
+  const imageUrl = card.lexicalEntry?.imageUrl ?? card.lexicalEntry?.image_url;
   const headword = card.lexicalEntry?.headword || '';
 
   if (!imageUrl) {
@@ -48,17 +59,6 @@ export default function ImageCard({
     setSubmit(true);
     onSubmit?.();
   };
-
-  useEffect(() => {
-    if (lastRating === null || lastRating === undefined) return;
-    const anims = {
-      0: { x: [-4, 4, -4, 4, 0], transition: { duration: 0.25 } },
-      1: { scale: [1, 1.02, 1], transition: { duration: 0.2 } },
-      2: { scale: [1, 1.02, 1], transition: { duration: 0.2 } },
-      3: { scale: [1, 1.03, 1], transition: { duration: 0.25 } },
-    };
-    if (anims[lastRating]) controls.start(anims[lastRating]);
-  }, [lastRating, controls]);
 
   const timeLabel   = responseTimeMs ? getResponseTimeLabel(responseTimeMs) : null;
   const showFeedback = (mode === 'typing' && submitted) || (mode === 'flip' && revealed);
